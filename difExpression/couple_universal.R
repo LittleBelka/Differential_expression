@@ -3,12 +3,15 @@ library(limma)
 library(org.Mm.eg.db)
 library(gtools)
 library(stringr)
+library(fgsea)
 library(data.table)
 library(reactome.db)
 # for collapseBy
 source("https://raw.githubusercontent.com/assaron/r-utils/master/R/exprs.R")
 # for conditions handling
 source("./difExpression/couple_universal_handler.R")
+# for gene set enrichment analysis
+source("./difExpression/gsea.R")
 
 options(download.file.method.GEOquery = "libcurl")
 #gse <- getGEO("GSE53986", destdir = ".")[[1]]
@@ -56,16 +59,23 @@ fit <- lmFit(es, es.design)
 conditions <- getConditionsForBuildingLinearModel(pData(gse)$condition)
 
 message("Conditions combinations were received for filling of contrast matrix.")
-a_fit <<- fit
-a_design <<- es.design
-a_conditions <<- conditions
-a_gse <<- gse
+
+# Show received pairs of comparisons
+for (i in 1:length(conditions)) {
+  message(conditions[[i]][1], " ", conditions[[i]][2])
+}
 
 deSize <- dim(fData(es))[1]
 deList <- fitLinearModel(fit, conditions, es.design, deSize)
 
-gseaResults <- geneSetEnrichmentAnalysis(deList)
+message("Linear Models was fitted and saved in \'deList\'.")
 
-a_gsea <<- gseaResults$gseaStat
+gseaResults <- geneSetEnrichmentAnalysis(deList)
+a_gsea_stat <<- gseaResults$gseaStat
 a_plots <<- gseaResults$gseaPlots
 message("Gene set enrichment analysis was done.")
+
+gseaResultsFor200Genes <<- gseaForDI200(deList)
+a_61055_gsea_stat <<- gseaResultsFor200Genes$gseaStat
+a_61055_plots <<- gseaResultsFor200Genes$gseaPlots 
+message("Gene set enrichment analysis for 200 genes in GSE61055 was done.")
