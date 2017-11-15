@@ -2,6 +2,7 @@ geneSetEnrichmentAnalysis <- function(deList) {
   gseaStat <- list()
   gseaPlots <- list()
   paths <- list()
+  gseaTableResults <- list()
   
   pathways <- getPathways()
   a_pathways <<- pathways
@@ -9,13 +10,22 @@ geneSetEnrichmentAnalysis <- function(deList) {
   for (i in 1:length(deList)) {
     ranks <- getRanks(deList[[i]])
     print(head(ranks))
+    a_ranks <<- ranks
     
     gseaPlots[[i]] <- plotEnrichment(pathways, ranks, gseaParam = 1)
     gseaStat[[i]] <- calcGseaStat(ranks, na.omit(match(pathways, names(ranks))))
+    
+    gseaTableResults[[i]] <- getGseaTableResults(pathways, ranks)
+    topPathways <- gseaTableResults[[i]][head(order(pval), n=15)][order(NES), pathway]
+    plotGseaTable(pathways[topPathways], ranks, gseaTableResults[[i]], gseaParam=0.5)
+    
     print(gseaStat[[i]])
     print("_________________________________________________________________-")
   }
-  return(list("gseaStat"=gseaStat, "gseaPlots"=gseaPlots))
+  
+  resultList <- list("gseaStat"=gseaStat, "gseaPlots"=gseaPlots, 
+                     "gseaTableResults"=gseaTableResults)
+  return(resultList)
 }
 
 getRanks <- function(de) {
@@ -41,6 +51,7 @@ getPathways <- function() {
 gseaForDI200 <- function(deList) {
   gseaStat <- list()
   gseaPlots <- list()
+  gseaTableResults <- list()
   
   di.file <- "di.dn200.sig.txt"
   diList <- read.table(di.file, header=T)
@@ -50,8 +61,12 @@ gseaForDI200 <- function(deList) {
     gseaResultsTmp <- geneSetEnrichmentAnalysisFor200Genes(deListShort)
     gseaStat[[i]] <- gseaResultsTmp$gseaStat 
     gseaPlots[[i]] <- gseaResultsTmp$gseaPlots
+    gseaTableResults[[i]] <- gseaTableResults
   }
-  return(list("gseaStat"=gseaStat, "gseaPlots"=gseaPlots))
+  
+  resultList <- list("gseaStat"=gseaStat, "gseaPlots"=gseaPlots, 
+                     "gseaTableResults"=gseaTableResults)
+  return(resultList)
 }
 
 getShortListFor200Genes <- function(deList, diList) {
@@ -62,17 +77,34 @@ getShortListFor200Genes <- function(deList, diList) {
   return(deList)
 }
 
+getGseaTableResults <- function(pathways, ranks) {
+  fgseaRes <- fgsea(pathways = pathways, stats = ranks,
+                    minSize=15,
+                    maxSize=500,
+                    nperm=1000,
+                    nproc=1)
+  fgseaRes <- fgseaRes[order(pval)]
+  return(fgseaRes)
+}
+
 geneSetEnrichmentAnalysisFor200Genes <- function(deList) {
   ranks <- getRanks(deList)
   pathways <- reactomePathways(names(ranks))
   
-  a_ranks <<- ranks
+  a_ranks_200 <<- ranks
   a_path_200 <<- pathways
   
   gseaPlots <- plotEnrichment(pathways, ranks, gseaParam = 1)
   gseaStat <- calcGseaStat(ranks, na.omit(match(pathways, names(ranks))))
+  
+  gseaTableResults <- getGseaTableResults(pathways, ranks)
+  topPathways <- gseaTableResults[head(order(pval), n=15)][order(NES), pathway]
+  plotGseaTable(pathways[topPathways], ranks, gseaTableResults, gseaParam=0.5)
+  
   print(gseaStat)
 
-  return(list("gseaStat"=gseaStat, "gseaPlots"=gseaPlots))
+  resultList <- list("gseaStat"=gseaStat, "gseaPlots"=gseaPlots, 
+                     "gseaTableResults"=gseaTableResults)
+  return(resultList)
 }
 

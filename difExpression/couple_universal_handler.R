@@ -153,7 +153,6 @@ fitLinearModel <- function(fit, conditions, design, deSize) {
     deList[[i]] <- data.table(topTable(fit2, adjust.method="BH", number=deSize, sort.by = "B"), keep.rownames = T)
     print(head(deList[[i]]))
   }
-  a_deList <<- deList
   a_fit2 <<- fit2
   return(deList)
 }

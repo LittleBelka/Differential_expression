@@ -73,9 +73,11 @@ message("Linear Models was fitted and saved in \'deList\'.")
 gseaResults <- geneSetEnrichmentAnalysis(deList)
 a_gsea_stat <<- gseaResults$gseaStat
 a_plots <<- gseaResults$gseaPlots
+a_gsea_table_results <<- gseaResults$gseaTableResults
 message("Gene set enrichment analysis was done.")
 
 gseaResultsFor200Genes <<- gseaForDI200(deList)
 a_61055_gsea_stat <<- gseaResultsFor200Genes$gseaStat
-a_61055_plots <<- gseaResultsFor200Genes$gseaPlots 
+a_61055_plots <<- gseaResultsFor200Genes$gseaPlots
+a_61055_gsea_table_results <<- gseaResultsFor200Genes$gseaTableResults
 message("Gene set enrichment analysis for 200 genes in GSE61055 was done.")
