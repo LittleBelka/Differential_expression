@@ -68,7 +68,7 @@ for (i in 1:length(conditions)) {
 deSize <- dim(fData(es))[1]
 deList <- fitLinearModel(fit, conditions, es.design, deSize)
 
-message("Linear Models was fitted and saved in \'deList\'.")
+message("Linear Models was fitted and saved in 'deList'.")
 
 gseaResults <- geneSetEnrichmentAnalysis(deList)
 a_gsea_stat <<- gseaResults$gseaStat

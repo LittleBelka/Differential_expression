@@ -61,7 +61,7 @@ gseaForDI200 <- function(deList) {
     gseaResultsTmp <- geneSetEnrichmentAnalysisFor200Genes(deListShort)
     gseaStat[[i]] <- gseaResultsTmp$gseaStat 
     gseaPlots[[i]] <- gseaResultsTmp$gseaPlots
-    gseaTableResults[[i]] <- gseaTableResults
+    gseaTableResults[[i]] <- gseaResultsTmp$gseaTableResults
   }
   
   resultList <- list("gseaStat"=gseaStat, "gseaPlots"=gseaPlots, 
