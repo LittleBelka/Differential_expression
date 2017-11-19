@@ -17,7 +17,8 @@ getConditionsFromCharacteristics <- function(gse, characteristics) {
     uniqChar <- unique(pData(gse)[ch])
     
     if (length(rownames(uniqChar)) > 1) 
-      conditionsList <- getConditionsFromUniqValues(gse, pData(gse)[ch], conditionsList, uniqChar)
+      conditionsList <- getConditionsFromUniqValues(
+                        gse, pData(gse)[ch], conditionsList, uniqChar)
   }
   return(conditionsList)
 }
@@ -53,7 +54,8 @@ getConditionsFromUniqValues <- function(gse, charColumns, conditionsList, uniqCh
 createTmpComplicatedConditionList <- function(uniqChar) {
   tmpComplicatedCondition <- list()
   for (i in 1:length(rownames(uniqChar))) {
-    tmpComplicatedCondition[[i]] <- list("condition"="", replacement=intToUtf8(64+i))
+    tmpComplicatedCondition[[i]] <- list("condition"="", 
+                                         replacement=intToUtf8(64+i))
   }
   return(tmpComplicatedCondition)
 }
@@ -100,8 +102,10 @@ isTooComplicatedCondition <- function(condition) {
 
 fillGseConditionColumn <- function(conditionList) {
   conditions <- c()
-  conditionList <- matrix(unlist(conditionList), ncol = length(conditionList[[1]]), byrow = TRUE)
+  conditionList <- matrix(unlist(conditionList), 
+                          ncol = length(conditionList[[1]]), byrow = TRUE)
   conditionList <- split(conditionList, c(col(conditionList)))
+  
   for (i in 1:length(conditionList)) {
     tmpCondition <- ""
     for (j in 1:length(conditionList[[i]]))
@@ -115,7 +119,9 @@ fillGseConditionColumn <- function(conditionList) {
 getConditionsForBuildingLinearModel <- function(conditions) {
   tmpConditions <- unique(conditions)
   conditions <- list()
-  tmpConditions <- combinations(n=length(tmpConditions), r=2, v=tmpConditions, set=T, repeats.allowed=F)
+  tmpConditions <- combinations(
+          n=length(tmpConditions), r=2, v=tmpConditions, set=T, repeats.allowed=F)
+  
   for (i in 1:(length(tmpConditions)/2)) {
     firstCon <- strsplit(tmpConditions[[i,1]], "_")
     secondCon <- strsplit(tmpConditions[[i,2]], "_")
@@ -132,6 +138,7 @@ getConditionsForBuildingLinearModel <- function(conditions) {
 provideValidOfSomeColumns <- function(gse) {
   if (!("ENTREZ_GENE_ID" %in% names(fData(gse)))) {
     columnNames <- names(fData(gse))
+    
     for (i in 1:length(columnNames)) {
       if (sapply(columnNames[i], tolower)[[1]] == "entrez_gene_id")
         names(fData(gse))[names(fData(gse)) == columnNames[i]] <- "ENTREZ_GENE_ID"
@@ -144,15 +151,38 @@ fitLinearModel <- function(fit, conditions, design, deSize) {
   deList <- list()
   for (i in 1:length(conditions)) {
     
-    contrasts <- makeContrasts2(c("condition", conditions[[i]]$firstCon, conditions[[i]]$secondCon), levels=design)
+    contrasts <- makeContrasts2(
+               c("condition", conditions[[i]]$firstCon, conditions[[i]]$secondCon), 
+               levels=design)
     
     fit2 <- contrasts.fit(fit, contrasts)
     fit2 <- eBayes(fit2)
     
-    # deList[[i]] <- topTable(fit2, adjust.method="BH", number=Inf)
-    deList[[i]] <- data.table(topTable(fit2, adjust.method="BH", number=deSize, sort.by = "B"), keep.rownames = T)
-    print(head(deList[[i]]))
+    deList[[i]] <- data.table(
+                   topTable(fit2, adjust.method="BH", number=deSize, sort.by = "B"), 
+                   keep.rownames = T)
   }
-  a_fit2 <<- fit2
+  return(deList)
+}
+
+writeDifExprResultsToFiles <- function(deList, conditions) {
+  for (i in 1:length(conditions)) {
+    nameFile <- paste("./results/text_data/difExpr/",
+                      conditions[[i]]$firstCon, ".vs.", 
+                      conditions[[i]]$secondCon, ".tsv", sep="")
+    write.table(deList[[i]], nameFile, sep="\t", quote = F, row.names = F)
+  }
+}
+
+readDifExprResultsFromFiles <- function() {
+  colTypes <- c("character", "character", 
+                "double", "double", "double", "double", "double","double")
+  files <- dir(path = "./results/text_data/difExpr", 
+               full.names = TRUE, recursive = TRUE)
+  deList <- list()
+  
+  for (i in 1:length(files))
+    deList[[i]] <- read.table(files[i], header=T, colClasses=colTypes)
+  
   return(deList)
 }

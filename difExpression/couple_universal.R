@@ -26,18 +26,17 @@ if (length(characteristics) != 0) {
   message("There are characteristics columns in the samples table.")
   print(characteristics)
   conditionLists <- getConditionsFromCharacteristics(gse, characteristics)
-  a_cStructure <<- conditionLists
 }
 if (length(conditionLists) > 0) {
   pData(gse)$condition <- fillGseConditionColumn(conditionLists)
-  message("Column \"condition\" was created and filled in the samples table.")
+  message("Column 'condition' was created and filled in the samples table.")
 } else {
   message("Characteristics columns in the samples table don't exist or were unhelpful.
           So start to parse title column.")
   getConditionsFromTitle()
 }
 
-con <<- pData(gse)$condition
+con <- pData(gse)$condition
 
 fData(gse) <- provideValidOfSomeColumns(gse)
 
@@ -61,23 +60,21 @@ conditions <- getConditionsForBuildingLinearModel(pData(gse)$condition)
 message("Conditions combinations were received for filling of contrast matrix.")
 
 # Show received pairs of comparisons
-for (i in 1:length(conditions)) {
+for (i in 1:length(conditions)) 
   message(conditions[[i]][1], " ", conditions[[i]][2])
-}
 
 deSize <- dim(fData(es))[1]
 deList <- fitLinearModel(fit, conditions, es.design, deSize)
+message("Linear Models were fitted and saved in 'deList'.")
 
-message("Linear Models was fitted and saved in 'deList'.")
+writeDifExprResultsToFiles(deList, conditions)
+message("Linear Models were written to files.")
+
+#deList <- readDifExprResultsFromFiles()
+#message("Linear Models were read from files and stored in 'deList'.")
 
 gseaResults <- geneSetEnrichmentAnalysis(deList)
-a_gsea_stat <<- gseaResults$gseaStat
-a_plots <<- gseaResults$gseaPlots
-a_gsea_table_results <<- gseaResults$gseaTableResults
+gseaStat <- gseaResults$gseaStat
+plots <- gseaResults$gseaPlots
+gseaTableResults <- gseaResults$gseaTableResults
 message("Gene set enrichment analysis was done.")
-
-gseaResultsFor200Genes <<- gseaForDI200(deList)
-a_61055_gsea_stat <<- gseaResultsFor200Genes$gseaStat
-a_61055_plots <<- gseaResultsFor200Genes$gseaPlots
-a_61055_gsea_table_results <<- gseaResultsFor200Genes$gseaTableResults
-message("Gene set enrichment analysis for 200 genes in GSE61055 was done.")
