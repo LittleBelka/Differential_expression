@@ -37,3 +37,26 @@ getGseaTableResults <- function(diList, ranks) {
   fgseaRes <- fgseaRes[order(pval)]
   return(fgseaRes)
 }
+
+writeGseaResults <- function(plots, gseaTableResults, conditions, dataSetSeries) {
+  dir.create(file.path("./results/", dataSetSeries), showWarnings = FALSE)
+  filePath <- paste("./results/", dataSetSeries, "/", sep="")
+  
+  dir.create(file.path(filePath, "fgsea"), showWarnings = FALSE)
+  dir.create(file.path(filePath, "plots"), showWarnings = FALSE)
+  
+  for (i in 1:length(conditions)) {
+    nameFileWithTableResults <- paste(filePath,
+                              "/fgsea/",        
+                              conditions[[i]]$firstCon, ".vs.", 
+                              conditions[[i]]$secondCon, ".tsv", sep="")
+    
+    nameFileWithPlot <- paste(filePath,
+                      "/plots/",        
+                      conditions[[i]]$firstCon, ".vs.", 
+                      conditions[[i]]$secondCon, ".png", sep="")
+    
+    fwrite(gseaTableResults[[i]], nameFileWithTableResults)
+    ggsave(filename=nameFileWithPlot, plot=plots[[i]], width = 9, height = 6, units = "cm")
+  }
+}

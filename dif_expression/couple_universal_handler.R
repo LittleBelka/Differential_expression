@@ -34,7 +34,7 @@ getConditionsFromUniqValues <- function(gse, charColumns, conditionsList, uniqCh
     
     for (v in values) {
       if (grepl("\\(.*\\)", v)) 
-        v <- str_replace(v, '.*\\((.*)\\).*', '\\1')
+        v <- tryGetConditionFromBrackets(v)
       if (isTooComplicatedCondition(v)) complicatedCondition <- TRUE
       
       if (complicatedCondition) {
@@ -42,7 +42,7 @@ getConditionsFromUniqValues <- function(gse, charColumns, conditionsList, uniqCh
         v <- resultCondition$condition
         tmpComplicatedCondition <- resultCondition$tmpComplicatedCondition
       } else 
-        v <- str_replace_all(v, "[\\+ _\\-:;\\.\\*!'\\/]*", "")
+        v <- gsub("[^a-zA-Z0-9]*", '\\1', v) 
       
       tmpCondition <- c(tmpCondition, v)
     }
@@ -51,11 +51,43 @@ getConditionsFromUniqValues <- function(gse, charColumns, conditionsList, uniqCh
   return(conditionsList)
 }
 
+tryGetConditionFromBrackets <- function(condition) {
+  newCondition <- str_replace(condition, '.*\\((.*)\\).*', '\\1')
+  tmp <- gsub("[^a-zA-Z]*", '\\1', newCondition)
+  if (nchar(tmp) > 0)
+    return(newCondition)
+  return(condition)
+}
+
 createTmpComplicatedConditionList <- function(uniqChar) {
   tmpComplicatedCondition <- list()
-  for (i in 1:length(rownames(uniqChar))) {
+  lenUniqChar <- length(rownames(uniqChar))
+  letters <- c()
+  for (i in 1:26) letters <- c(letters, intToUtf8(64+i))
+  i = 1
+  
+  while (lenUniqChar >= i && i <= 26) {
+    tmpComplicatedCondition[[i]] <- list("condition"="", "replacement"=letters[i])
+    i = i + 1
+  }
+  
+  if (lenUniqChar > 26) 
+    tmpComplicatedCondition <- condListWithPermutations(
+                                tmpComplicatedCondition, letters, lenUniqChar, i)
+    
+  return(tmpComplicatedCondition)
+}
+
+condListWithPermutations <- function(tmpComplicatedCondition, letters, 
+                                                            lenUniqChar, i) {
+  tmpConditions <- permutations(
+    n=length(letters[1:6]), r=2, v=letters[1:6], set=T, repeats.allowed=T)
+  
+  while (lenUniqChar >= i) {
+    cond <- paste(tmpConditions[[i,1]], tmpConditions[[i,2]], sep="")
     tmpComplicatedCondition[[i]] <- list("condition"="", 
-                                         replacement=intToUtf8(64+i))
+                                         "replacement"=cond)
+    i = i + 1
   }
   return(tmpComplicatedCondition)
 }
@@ -165,9 +197,14 @@ fitLinearModel <- function(fit, conditions, design, deSize) {
   return(deList)
 }
 
-writeDifExprResultsToFiles <- function(deList, conditions) {
+writeDifExprResultsToFiles <- function(deList, conditions, dataSetSeries) {
+  dir.create(file.path("./results/", dataSetSeries), showWarnings = FALSE)
+  filePath <- paste("./results/", dataSetSeries, "/", sep="")
+  dir.create(file.path(filePath, "dif_expression"), showWarnings = FALSE)
+  
   for (i in 1:length(conditions)) {
-    nameFile <- paste("./results/text_data/difExpr/",
+    nameFile <- paste(filePath,
+                      "/dif_expression/",
                       conditions[[i]]$firstCon, ".vs.", 
                       conditions[[i]]$secondCon, ".tsv", sep="")
     write.table(deList[[i]], nameFile, sep="\t", quote = F, row.names = F)
@@ -177,7 +214,7 @@ writeDifExprResultsToFiles <- function(deList, conditions) {
 readDifExprResultsFromFiles <- function() {
   colTypes <- c("character", "character", 
                 "double", "double", "double", "double", "double","double")
-  files <- dir(path = "./results/text_data/difExpr", 
+  files <- dir(path = "./results/dif_expression", 
                full.names = TRUE, recursive = TRUE)
   deList <- list()
   
