@@ -8,14 +8,15 @@ geneSetEnrichmentAnalysis <- function(deList) {
   diList <- as.character(diList[[1]])
   
   for (i in 1:length(deList)) {
-    ranks <- getRanks(deList[[i]])
-    gseaPlots[[i]] <- plotEnrichment(diList, ranks, gseaParam = 1)
-    gseaStat[[i]] <- calcGseaStat(ranks, na.omit(match(diList, names(ranks))))
+    ranksResults <- getRanks(deList[[i]])
+    ranks <- ranksResults$ranks
     
+    gseaPlots[[i]] <- plotEnrichment(diList, ranks, gseaParam = 1)
     gseaTableResults[[i]] <- getGseaTableResults(diList, ranks)
+    # gseaTableResults[[i]] <- hypergeometricTest(diList, ranksResults$vectorDI)
   }
   
-  resultList <- list("gseaStat"=gseaStat, "gseaPlots"=gseaPlots, 
+  resultList <- list("gseaPlots"=gseaPlots, 
                      "gseaTableResults"=gseaTableResults)
   return(resultList)
 }
@@ -25,7 +26,18 @@ getRanks <- function(de) {
   ranks <- as.numeric(unlist(ranksTmp[[2]]))
   ranks <- setNames(ranks, ranksTmp[[1]])
   
-  return(ranks)
+  return(list("ranks"=ranks, "vectorDI"=ranksTmp$rn))
+}
+
+hypergeometricTest <- function(diList, ranks) {
+  overlapCount <- length(intersect(diList, ranks))
+  lenList1 <- length(ranks)
+  lenList2 <- length(diList)
+  
+  phyper(overlapCount, lenList1, X-lenList1, lenList2)
+  #phyper(184, 20879, 1000, 199) = 0.04005686
+  
+  return()
 }
 
 getGseaTableResults <- function(diList, ranks) {
@@ -57,6 +69,7 @@ writeGseaResults <- function(plots, gseaTableResults, conditions, dataSetSeries)
                       conditions[[i]]$secondCon, ".png", sep="")
     
     fwrite(gseaTableResults[[i]], nameFileWithTableResults)
-    ggsave(filename=nameFileWithPlot, plot=plots[[i]], width = 9, height = 6, units = "cm")
+    ggsave(filename=nameFileWithPlot, plot=plots[[i]], 
+           width = 9, height = 6, units = "cm")
   }
 }

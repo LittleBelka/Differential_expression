@@ -70,12 +70,11 @@ differentialExpression <- function(dataSetSeries) {
   #message("Linear Models were read from files and stored in 'deList'.")
   
   gseaResults <- geneSetEnrichmentAnalysis(deList)
-  gseaStat <- gseaResults$gseaStat
   plots <- gseaResults$gseaPlots
   gseaTableResults <- gseaResults$gseaTableResults
   message("Gene set enrichment analysis was done.")
   
   writeGseaResults(gseaResults$gseaPlots, gseaResults$gseaTableResults,
-                   conditions, dataSetSeries)
+                    conditions, dataSetSeries)
   message("Gene set enrichment analysis results were written to files.")
 }
