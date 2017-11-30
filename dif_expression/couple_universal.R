@@ -7,7 +7,6 @@ differentialExpression <- function(dataSetSeries) {
   library(fgsea)
   library(ggplot2)
   library(data.table)
-  library(reactome.db)
   # for collapseBy
   source("https://raw.githubusercontent.com/assaron/r-utils/master/R/exprs.R")
   # for conditions handling
