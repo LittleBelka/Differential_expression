@@ -1,9 +1,10 @@
-geneSetEnrichmentAnalysis <- function(deList, fileWithGenes) {
+geneSetEnrichmentAnalysis <- function(deList) {
   gseaStat <- list()
   gseaPlots <- list()
   gseaTableResults <- list()
   
-  diList <- read.table(fileWithGenes, header=T)
+  di.file <- "di.dn200.sig.txt"
+  diList <- read.table(di.file, header=T)
   diList <- as.character(diList[[1]])
   
   for (i in 1:length(deList)) {

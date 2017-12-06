@@ -7,31 +7,23 @@ getCharacteristicsColumns <- function(gse) {
   return(characteristics)
 }
 
-
 getConditionsFromTitle <- function() {}
-
 
 getConditionsFromCharacteristics <- function(gse, characteristics) {
   uniqList <- list()
   conditionsList <- list()
-  explanatoryTable <- data.table()
   
   for (ch in characteristics) {
     uniqChar <- unique(pData(gse)[ch])
     
-    if (length(rownames(uniqChar)) > 1) {
-      conStructure <- getConditionsFromUniqValues(gse, pData(gse)[ch], 
-                                      conditionsList, uniqChar, explanatoryTable)
-      conditionsList <- conStructure$conditionsList
-      explanatoryTable <- conStructure$explanatoryTable
-    }
+    if (length(rownames(uniqChar)) > 1) 
+      conditionsList <- getConditionsFromUniqValues(
+                        gse, pData(gse)[ch], conditionsList, uniqChar)
   }
-  return(list("conditionsList"=conditionsList, "explanatoryTable"=explanatoryTable))
+  return(conditionsList)
 }
 
-
-getConditionsFromUniqValues <- function(gse, charColumns, conditionsList, uniqChar, 
-                                                                explanatoryTable) {
+getConditionsFromUniqValues <- function(gse, charColumns, conditionsList, uniqChar) {
   values <- sub("^.*: ", "", charColumns[[1]])
   numerics <- is.na(suppressWarnings(as.numeric(values)))
   
@@ -41,26 +33,23 @@ getConditionsFromUniqValues <- function(gse, charColumns, conditionsList, uniqCh
     tmpComplicatedCondition <- createTmpComplicatedConditionList(uniqChar)
     
     for (v in values) {
-      oldV <- v
-      if (grepl("\\(.*\\)", v)) v <- tryGetConditionFromBrackets(v)
-      
+      if (grepl("\\(.*\\)", v)) 
+        v <- tryGetConditionFromBrackets(v)
       if (isTooComplicatedCondition(v)) complicatedCondition <- TRUE
       
       if (complicatedCondition) {
-        resultCondition <- handleComplicatedCondition(tmpComplicatedCondition, oldV, explanatoryTable)
+        resultCondition <- handleComplicatedCondition(tmpComplicatedCondition, v)
         v <- resultCondition$condition
         tmpComplicatedCondition <- resultCondition$tmpComplicatedCondition
-        explanatoryTable <- resultCondition$explanatoryTable
       } else 
         v <- gsub("[^a-zA-Z0-9]*", '\\1', v) 
       
-      if (grepl("[a-zA-Z]+", v)) tmpCondition <- c(tmpCondition, v)
+      tmpCondition <- c(tmpCondition, v)
     }
     conditionsList[[length(conditionsList)+1]] <- tmpCondition
   }
-  return(list("conditionsList"=conditionsList, "explanatoryTable"=explanatoryTable))
+  return(conditionsList)
 }
-
 
 tryGetConditionFromBrackets <- function(condition) {
   newCondition <- str_replace(condition, '.*\\((.*)\\).*', '\\1')
@@ -69,7 +58,6 @@ tryGetConditionFromBrackets <- function(condition) {
     return(newCondition)
   return(condition)
 }
-
 
 createTmpComplicatedConditionList <- function(uniqChar) {
   tmpComplicatedCondition <- list()
@@ -82,13 +70,13 @@ createTmpComplicatedConditionList <- function(uniqChar) {
     tmpComplicatedCondition[[i]] <- list("condition"="", "replacement"=letters[i])
     i = i + 1
   }
+  
   if (lenUniqChar > 26) 
     tmpComplicatedCondition <- condListWithPermutations(
                                 tmpComplicatedCondition, letters, lenUniqChar, i)
-  
+    
   return(tmpComplicatedCondition)
 }
-
 
 condListWithPermutations <- function(tmpComplicatedCondition, letters, 
                                                             lenUniqChar, i) {
@@ -104,25 +92,17 @@ condListWithPermutations <- function(tmpComplicatedCondition, letters,
   return(tmpComplicatedCondition)
 }
 
-
-handleComplicatedCondition <- function(tmpComplicatedCondition, cond, 
-                                                        explanatoryTable) {
-  newConditionName <- isContainedInConditionList(tmpComplicatedCondition, cond)
+handleComplicatedCondition <- function(tmpComplicatedCondition, v) {
+  newConditionName <- isContainedInConditionList(tmpComplicatedCondition, v)
   if (newConditionName != "") {
-    newCond <- newConditionName 
+    v <- newConditionName 
   } else {
     newConditionIndex <- getFreeListPosition(tmpComplicatedCondition)
-    tmpComplicatedCondition[[newConditionIndex]]$condition <- cond
-    newCond <- tmpComplicatedCondition[[newConditionIndex]]$replacement
-    
-    explanatoryTable <- rbindlist(list(explanatoryTable, data.table(
-                                  "characteristics"=cond, "marking"=newCond)))
+    tmpComplicatedCondition[[newConditionIndex]]$condition = v
+    v = tmpComplicatedCondition[[newConditionIndex]]$replacement
   }
-  return(list("condition"=newCond, 
-              "tmpComplicatedCondition"=tmpComplicatedCondition, 
-              "explanatoryTable"=explanatoryTable))
+  return(list("condition"=v, "tmpComplicatedCondition"=tmpComplicatedCondition))
 }
-
 
 getFreeListPosition <- function(tmpComplicatedCondition) {
   i = 0
@@ -135,7 +115,6 @@ getFreeListPosition <- function(tmpComplicatedCondition) {
   return(i)
 }
 
-
 isContainedInConditionList <- function(tmpComplicatedCondition, condition) {
   for (i in 1:length(tmpComplicatedCondition)) {
     if (length(tmpComplicatedCondition[[i]]$condition) > 0 
@@ -145,7 +124,6 @@ isContainedInConditionList <- function(tmpComplicatedCondition, condition) {
   return("")
 }
 
-
 isTooComplicatedCondition <- function(condition) {
   if (length(unlist(gregexpr(pattern = "\\+", condition))) > 1
       || length(unlist(gregexpr(pattern = "-", condition))) > 1
@@ -153,7 +131,6 @@ isTooComplicatedCondition <- function(condition) {
     return(TRUE)
   return(FALSE)
 }
-
 
 fillGseConditionColumn <- function(conditionList) {
   conditions <- c()
@@ -163,16 +140,13 @@ fillGseConditionColumn <- function(conditionList) {
   
   for (i in 1:length(conditionList)) {
     tmpCondition <- ""
-    
     for (j in 1:length(conditionList[[i]]))
       tmpCondition <- paste(tmpCondition, conditionList[[i]][j], sep="_")
-    
     tmpCondition <- str_replace(tmpCondition, "_$", "")
     conditions <- c(conditions, str_replace(tmpCondition, "^_", ""))
   }
   return(conditions)
 }
-
 
 getConditionsForBuildingLinearModel <- function(conditions) {
   tmpConditions <- unique(conditions)
@@ -193,7 +167,6 @@ getConditionsForBuildingLinearModel <- function(conditions) {
   return(conditions)
 }
 
-
 provideValidOfSomeColumns <- function(gse) {
   if (!("ENTREZ_GENE_ID" %in% names(fData(gse)))) {
     columnNames <- names(fData(gse))
@@ -205,7 +178,6 @@ provideValidOfSomeColumns <- function(gse) {
   }
   return(fData(gse))
 }
-
 
 fitLinearModel <- function(fit, conditions, design, deSize) {
   deList <- list()
@@ -225,14 +197,6 @@ fitLinearModel <- function(fit, conditions, design, deSize) {
   return(deList)
 }
 
-
-writeExplanatoryTableToFile <- function(explanatoryTable, dataSetSeries) {
-  nameFile <- paste("./results/", dataSetSeries, 
-                    "/dif_expression/explanatoryTable.tsv", sep="")
-  fwrite(explanatoryTable, nameFile, sep = "\t")
-}
-
-
 writeDifExprResultsToFiles <- function(deList, conditions, dataSetSeries) {
   dir.create(file.path("./results/", dataSetSeries), showWarnings = FALSE)
   filePath <- paste("./results/", dataSetSeries, "/", sep="")
@@ -246,7 +210,6 @@ writeDifExprResultsToFiles <- function(deList, conditions, dataSetSeries) {
     write.table(deList[[i]], nameFile, sep="\t", quote = F, row.names = F)
   }
 }
-
 
 readDifExprResultsFromFiles <- function() {
   colTypes <- c("character", "character", 

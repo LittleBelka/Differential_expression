@@ -1,4 +1,4 @@
-differentialExpression <- function(dataSetSeries, fileWithGenes) {
+differentialExpression <- function(dataSetSeries) {
   library(GEOquery)
   library(limma)
   library(org.Mm.eg.db)
@@ -14,18 +14,15 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
   # for gene set enrichment analysis
   source("./dif_expression/gsea.R")
   
-  # options(download.file.method.GEOquery = "libcurl")
+  options(download.file.method.GEOquery = "libcurl")
   gse <- getGEO(dataSetSeries, destdir = ".")[[1]] 
 
   characteristics <- getCharacteristicsColumns(gse)
   conditionLists <- list()
-  explanatoryTable <- data.table()
   
   if (length(characteristics) > 0) {
     message("There are characteristics columns in the samples table.")
-    conStructure <- getConditionsFromCharacteristics(gse, characteristics)
-    conditionLists <- conStructure$conditionsList
-    explanatoryTable <- conStructure$explanatoryTable 
+    conditionLists <- getConditionsFromCharacteristics(gse, characteristics)
   }
   if (length(conditionLists) > 0) {
     pData(gse)$condition <- fillGseConditionColumn(conditionLists)
@@ -35,27 +32,25 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
             So start to parse title column.")
     getConditionsFromTitle()
   }
-  a_gse <<- gse
+  
   fData(gse) <- provideValidOfSomeColumns(gse)
-
+  
   es <- collapseBy(gse, fData(gse)$ENTREZ_GENE_ID, FUN=median)
-  # es <- collapseBy(gse, fData(gse)$GENE_SYMBOL, FUN=median)
   es <- es[!grepl("///", rownames(es)), ]
   es <- es[rownames(es) != "", ]
   
   message("Garbage was deleted from gene table.")
-  a_es00 <<- es
+  
   fData(es) <- data.frame(row.names = rownames(es))
-  a_es1 <<- es
+  
   fData(es)$symbol <- mapIds(org.Mm.eg.db, keys = rownames(es), column = "SYMBOL", keytype = "ENTREZID")
-  a_es <<- es
+  
   exprs(es) <- normalizeBetweenArrays(log2(exprs(es)+1), method="quantile")
   
   es.design <- model.matrix(~0+condition, data=pData(es))
   
   fit <- lmFit(es, es.design)
   conditions <- getConditionsForBuildingLinearModel(pData(gse)$condition)
-  a_conditions <<- conditions
   
   message("Conditions combinations were received for filling of contrast matrix.")
   
@@ -67,20 +62,15 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
   deList <- fitLinearModel(fit, conditions, es.design, deSize)
   message("Linear Models were fitted and saved in 'deList'.")
   
-  a_deList <<- deList
-  
   writeDifExprResultsToFiles(deList, conditions, dataSetSeries)
   message("Linear Models were written to files.")
-  
-  if (length(explanatoryTable) > 0)
-    writeExplanatoryTableToFile(explanatoryTable, dataSetSeries)
   
   #deList <- readDifExprResultsFromFiles()
   #message("Linear Models were read from files and stored in 'deList'.")
   
-  gseaResults <- geneSetEnrichmentAnalysis(deList, fileWithGenes)
-  plots <<- gseaResults$gseaPlots
-  gseaTableResults <<- gseaResults$gseaTableResults
+  gseaResults <- geneSetEnrichmentAnalysis(deList)
+  plots <- gseaResults$gseaPlots
+  gseaTableResults <- gseaResults$gseaTableResults
   message("Gene set enrichment analysis was done.")
   
   writeGseaResults(gseaResults$gseaPlots, gseaResults$gseaTableResults,
