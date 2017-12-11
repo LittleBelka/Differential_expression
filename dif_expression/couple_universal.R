@@ -2,6 +2,8 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
   library(GEOquery)
   library(limma)
   library(org.Mm.eg.db)
+  library(org.Rn.eg.db)
+  library(org.Hs.eg.db)
   library(gtools)
   library(stringr)
   library(fgsea)
@@ -15,7 +17,7 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
   source("./dif_expression/gsea.R")
   
   # options(download.file.method.GEOquery = "libcurl")
-  gse <- getGEO(dataSetSeries, destdir = ".")[[1]] 
+  gse <- getGEO(dataSetSeries, destdir = "./data", getGPL = TRUE)[[1]] 
 
   characteristics <- getCharacteristicsColumns(gse)
   conditionLists <- list()
@@ -30,60 +32,70 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
   if (length(conditionLists) > 0) {
     pData(gse)$condition <- fillGseConditionColumn(conditionLists)
     message("Column 'condition' was created and filled in the samples table.")
-  } else {
-    message("Characteristics columns in the samples table don't exist or were unhelpful.
-            So start to parse title column.")
-    getConditionsFromTitle()
-  }
-  a_gse <<- gse
-  fData(gse) <- provideValidOfSomeColumns(gse)
+    
+    a_gse <<- gse
+    resValidation <- provideValidOfSomeColumns(gse)
+    fData(gse) <- resValidation$fData
+    isContainedIdGenesColumn <- resValidation$successValidation
+    
+    if (isContainedIdGenesColumn) {
+      es <- ""
+      if (length(fData(a_gse)$ENTREZ_GENE_ID) != 0)
+        es <- collapseBy(gse, fData(gse)$ENTREZ_GENE_ID, FUN=median)
+      else if (length(fData(a_gse)$GENE) != 0)
+        es <- collapseBy(gse, fData(gse)$GENE, FUN=median)
 
-  es <- collapseBy(gse, fData(gse)$ENTREZ_GENE_ID, FUN=median)
-  # es <- collapseBy(gse, fData(gse)$GENE_SYMBOL, FUN=median)
-  es <- es[!grepl("///", rownames(es)), ]
-  es <- es[rownames(es) != "", ]
-  
-  message("Garbage was deleted from gene table.")
-  a_es00 <<- es
-  fData(es) <- data.frame(row.names = rownames(es))
-  a_es1 <<- es
-  fData(es)$symbol <- mapIds(org.Mm.eg.db, keys = rownames(es), column = "SYMBOL", keytype = "ENTREZID")
-  a_es <<- es
-  exprs(es) <- normalizeBetweenArrays(log2(exprs(es)+1), method="quantile")
-  
-  es.design <- model.matrix(~0+condition, data=pData(es))
-  
-  fit <- lmFit(es, es.design)
-  conditions <- getConditionsForBuildingLinearModel(pData(gse)$condition)
-  a_conditions <<- conditions
-  
-  message("Conditions combinations were received for filling of contrast matrix.")
-  
-  # Show received pairs of comparisons
-  for (i in 1:length(conditions)) 
-    message(conditions[[i]][1], " ", conditions[[i]][2])
-  
-  deSize <- dim(fData(es))[1]
-  deList <- fitLinearModel(fit, conditions, es.design, deSize)
-  message("Linear Models were fitted and saved in 'deList'.")
-  
-  a_deList <<- deList
-  
-  writeDifExprResultsToFiles(deList, conditions, dataSetSeries)
-  message("Linear Models were written to files.")
-  
-  if (length(explanatoryTable) > 0)
-    writeExplanatoryTableToFile(explanatoryTable, dataSetSeries)
-  
-  #deList <- readDifExprResultsFromFiles()
-  #message("Linear Models were read from files and stored in 'deList'.")
-  
-  gseaResults <- geneSetEnrichmentAnalysis(deList, fileWithGenes)
-  plots <<- gseaResults$gseaPlots
-  gseaTableResults <<- gseaResults$gseaTableResults
-  message("Gene set enrichment analysis was done.")
-  
-  writeGseaResults(gseaResults$gseaPlots, gseaResults$gseaTableResults,
-                    conditions, dataSetSeries)
-  message("Gene set enrichment analysis results were written to files.")
-}
+      es <- es[!grepl("///", rownames(es)), ]
+      es <- es[rownames(es) != "", ]
+      
+      message("Garbage was deleted from gene table.")
+      a_es00 <<- es
+      fData(es) <- data.frame(row.names = rownames(es))
+      a_es1 <<- es
+      database <- getDatabaseForMapping(gse)
+      fData(es)$symbol <- mapIds(database, keys = rownames(es), column = "SYMBOL", keytype = "ENTREZID")
+      a_es <<- es
+      exprs(es) <- normalizeBetweenArrays(log2(exprs(es)+1), method="quantile")
+      
+      es.design <- model.matrix(~0+condition, data=pData(es))
+      
+      fit <- lmFit(es, es.design)
+      conditions <- getConditionsForBuildingLinearModel(pData(gse)$condition)
+      a_conditions <<- conditions
+      
+      message("Conditions combinations were received for filling of contrast matrix.")
+      
+      # Show received pairs of comparisons
+      for (i in 1:length(conditions)) 
+        message(conditions[[i]][1], " ", conditions[[i]][2])
+      
+      deSize <- dim(fData(es))[1]
+      deList <- fitLinearModel(fit, conditions, es.design, deSize)
+      message("Linear Models were fitted and saved in 'deList'.")
+      
+      a_deList <<- deList
+      
+      writeDifExprResultsToFiles(deList, conditions, dataSetSeries)
+      message("Linear Models were written to files.")
+      
+      if (length(explanatoryTable) > 0)
+        writeExplanatoryTableToFile(explanatoryTable, dataSetSeries)
+      
+      #deList <- readDifExprResultsFromFiles()
+      #message("Linear Models were read from files and stored in 'deList'.")
+      
+      gseaResults <- geneSetEnrichmentAnalysis(deList, fileWithGenes)
+      plots <<- gseaResults$gseaPlots
+      gseaTableResults <<- gseaResults$gseaTableResults
+      message("Gene set enrichment analysis was done.")
+      
+      writeGseaResults(gseaResults$gseaPlots, gseaResults$gseaTableResults,
+                       conditions, dataSetSeries)
+      message("Gene set enrichment analysis results were written to files.")
+    } else 
+      message("Table isn't contained column with genes ID.")
+    
+  } else 
+    message("Characteristics columns in the samples table don't exist or were unhelpful.
+            So it need's to parse title column.")
+} 

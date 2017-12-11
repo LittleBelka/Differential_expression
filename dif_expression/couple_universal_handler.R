@@ -107,6 +107,7 @@ condListWithPermutations <- function(tmpComplicatedCondition, letters,
 
 handleComplicatedCondition <- function(tmpComplicatedCondition, cond, 
                                                         explanatoryTable) {
+  cond <- gsub("[^a-zA-Z0-9 \\+-]*", '\\1', cond) 
   newConditionName <- isContainedInConditionList(tmpComplicatedCondition, cond)
   if (newConditionName != "") {
     newCond <- newConditionName 
@@ -129,8 +130,7 @@ getFreeListPosition <- function(tmpComplicatedCondition) {
   found <- FALSE
   while(!found && length(tmpComplicatedCondition) > i) {
     i = i + 1
-    if (tmpComplicatedCondition[[i]]$condition == "") 
-      found <- TRUE
+    if (tmpComplicatedCondition[[i]]$condition == "") found <- TRUE
   }
   return(i)
 }
@@ -195,15 +195,43 @@ getConditionsForBuildingLinearModel <- function(conditions) {
 
 
 provideValidOfSomeColumns <- function(gse) {
-  if (!("ENTREZ_GENE_ID" %in% names(fData(gse)))) {
+  successValidation <- FALSE
+  if ("ENTREZ_GENE_ID" %in% names(fData(gse))) {
+    successValidation <- TRUE
+  } else {
     columnNames <- names(fData(gse))
     
     for (i in 1:length(columnNames)) {
-      if (sapply(columnNames[i], tolower)[[1]] == "entrez_gene_id")
+      if (sapply(columnNames[i], tolower)[[1]] == "entrez_gene_id") {
         names(fData(gse))[names(fData(gse)) == columnNames[i]] <- "ENTREZ_GENE_ID"
+        successValidation <- TRUE
+      } else if (sapply(columnNames[i], tolower)[[1]] == "gene") {
+        names(fData(gse))[names(fData(gse)) == columnNames[i]] <- "GENE"
+        numerics <- is.na(suppressWarnings(as.numeric(fData(a_gse)$GENE)))
+        
+        if (sum(!is.na(fData(a_gse)$GENE)) == length(numerics[numerics==FALSE]))
+          successValidation <- TRUE
+      }
     }
   }
-  return(fData(gse))
+  return(list("fData"=fData(gse), "successValidation"=successValidation))
+}
+
+
+getDatabaseForMapping <- function(gse) {
+  col <- colnames(pData(gse))
+  curOrganism <- ""
+  for (ch in col) 
+    if (grepl("organism", ch)) curOrganism <- tolower(pData(a_gse)[ch][[1]][1])
+  
+  database <- org.Hs.eg.db
+  
+  if (curOrganism != "") {
+    if (curOrganism == "mus musculus") database <- org.Mm.eg.db
+    if (curOrganism == "rattus norvegicus") database <- org.Rn.eg.db
+  }
+  
+  return(database)
 }
 
 

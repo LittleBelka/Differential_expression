@@ -5,8 +5,11 @@ options(download.file.method.GEOquery = "libcurl")
 
 # dataSetSeries <- c("GSE53986", "GSE50122", "GSE61055", "GSE14308")
 #dataSetSeries <- c("GSE38230-GPL10123")
-dataSetSeries <- c("GSE50122")
+# dataSetSeries <- c("GSE61055")
+dataSetSeries <- c("GSE9918")
 fileWithGenes <- "di.dn200.sig.txt"
+
+# View(head(fData(a_es00)))
 
 # difExpr <- function(i) {
 #   message("Start of processing ", dataSetSeries[i], ".")
