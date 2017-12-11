@@ -10,15 +10,18 @@ geneSetEnrichmentAnalysis <- function(deList, fileWithGenes) {
     ranksResults <- getRanks(deList[[i]])
     ranks <- ranksResults$ranks
     
-    gseaPlots[[i]] <- plotEnrichment(diList, ranks, gseaParam = 1)
-    gseaTableResults[[i]] <- getGseaTableResults(diList, ranks)
-    # gseaTableResults[[i]] <- hypergeometricTest(diList, ranksResults$vectorDI)
+    if (length(intersect(diList, ranks)) > 0) {
+      gseaPlots[[i]] <- plotEnrichment(diList, ranks, gseaParam = 1)
+      gseaTableResults[[i]] <- getGseaTableResults(diList, ranks)
+      # gseaTableResults[[i]] <- hypergeometricTest(diList, ranksResults$vectorDI)
+    }
   }
   
   resultList <- list("gseaPlots"=gseaPlots, 
                      "gseaTableResults"=gseaTableResults)
   return(resultList)
 }
+
 
 getRanks <- function(de) {
   ranksTmp <- de[order(t), list(rn, t)]
@@ -27,6 +30,7 @@ getRanks <- function(de) {
   
   return(list("ranks"=ranks, "vectorDI"=ranksTmp$rn))
 }
+
 
 hypergeometricTest <- function(diList, ranks) {
   overlapCount <- length(intersect(diList, ranks))
@@ -39,6 +43,7 @@ hypergeometricTest <- function(diList, ranks) {
   return()
 }
 
+
 getGseaTableResults <- function(diList, ranks) {
   fgseaRes <- fgsea(pathways = list(diList), stats = ranks,
                     minSize=15,
@@ -48,6 +53,7 @@ getGseaTableResults <- function(diList, ranks) {
   fgseaRes <- fgseaRes[order(pval)]
   return(fgseaRes)
 }
+
 
 writeGseaResults <- function(plots, gseaTableResults, conditions, dataSetSeries) {
   dir.create(file.path("./results/", dataSetSeries), showWarnings = FALSE)

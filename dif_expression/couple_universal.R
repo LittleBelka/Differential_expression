@@ -40,9 +40,9 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
     
     if (isContainedIdGenesColumn) {
       es <- ""
-      if (length(fData(a_gse)$ENTREZ_GENE_ID) != 0)
+      if (length(fData(gse)$ENTREZ_GENE_ID) != 0)
         es <- collapseBy(gse, fData(gse)$ENTREZ_GENE_ID, FUN=median)
-      else if (length(fData(a_gse)$GENE) != 0)
+      else if (length(fData(gse)$GENE) != 0)
         es <- collapseBy(gse, fData(gse)$GENE, FUN=median)
 
       es <- es[!grepl("///", rownames(es)), ]
@@ -89,9 +89,11 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
       gseaTableResults <<- gseaResults$gseaTableResults
       message("Gene set enrichment analysis was done.")
       
-      writeGseaResults(gseaResults$gseaPlots, gseaResults$gseaTableResults,
-                       conditions, dataSetSeries)
-      message("Gene set enrichment analysis results were written to files.")
+      if (length(gseaResults$gseaPlots) > 0) {
+        writeGseaResults(gseaResults$gseaPlots, gseaResults$gseaTableResults,
+                         conditions, dataSetSeries)
+        message("Gene set enrichment analysis results were written to files.")
+      }
     } else 
       message("Table isn't contained column with genes ID.")
     
