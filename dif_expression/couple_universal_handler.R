@@ -37,11 +37,12 @@ getConditionsFromUniqValues <- function(gse, charColumns, conditionsList, uniqCh
   
   if (length(numerics[numerics==FALSE]) == 0) {
     tmpCondition <- c()
-    complicatedCondition <- FALSE
     tmpComplicatedCondition <- createTmpComplicatedConditionList(uniqChar)
     
     for (v in values) {
       oldV <- v
+      complicatedCondition <- FALSE
+      
       if (grepl("\\(.*\\)", v)) v <- tryGetConditionFromBrackets(v)
       
       if (isTooComplicatedCondition(v)) complicatedCondition <- TRUE
