@@ -48,7 +48,8 @@ getConditionsFromUniqValues <- function(gse, charColumns, conditionsList, uniqCh
       if (isTooComplicatedCondition(v)) complicatedCondition <- TRUE
       
       if (complicatedCondition) {
-        resultCondition <- handleComplicatedCondition(tmpComplicatedCondition, oldV, explanatoryTable)
+        resultCondition <- handleComplicatedCondition(tmpComplicatedCondition, 
+                                                      oldV, explanatoryTable)
         v <- resultCondition$condition
         tmpComplicatedCondition <- resultCondition$tmpComplicatedCondition
         explanatoryTable <- resultCondition$explanatoryTable
