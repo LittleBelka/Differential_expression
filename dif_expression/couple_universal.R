@@ -17,7 +17,7 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
   source("./dif_expression/gsea.R")
   
   # options(download.file.method.GEOquery = "libcurl")
-  gse <- getGEO(dataSetSeries, destdir = "./data", getGPL = TRUE)[[1]] 
+  gse <- getGEO(dataSetSeries, destdir = "./data")[[1]] 
 
   characteristics <- getCharacteristicsColumns(gse)
   conditionLists <- list()
@@ -29,6 +29,7 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
     conditionLists <- conStructure$conditionsList
     explanatoryTable <- conStructure$explanatoryTable 
   }
+  
   if (length(conditionLists) > 0) {
     pData(gse)$condition <- fillGseConditionColumn(conditionLists)
     message("Column 'condition' was created and filled in the samples table.")
