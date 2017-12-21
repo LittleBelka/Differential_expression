@@ -1,5 +1,4 @@
 geneSetEnrichmentAnalysis <- function(deList, fileWithGenes) {
-  gseaStat <- list()
   gseaPlots <- list()
   gseaTableResults <- list()
   
@@ -10,7 +9,7 @@ geneSetEnrichmentAnalysis <- function(deList, fileWithGenes) {
     ranksResults <- getRanks(deList[[i]])
     ranks <- ranksResults$ranks
     
-    if (length(intersect(diList, ranks)) > 0) {
+    if (length(intersect(diList, names(ranks))) > 0) {
       gseaPlots[[i]] <- plotEnrichment(diList, ranks, gseaParam = 1)
       gseaTableResults[[i]] <- getGseaTableResults(diList, ranks)
       # gseaTableResults[[i]] <- hypergeometricTest(diList, ranksResults$vectorDI)

@@ -16,7 +16,6 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
   # for gene set enrichment analysis
   source("./dif_expression/gsea.R")
   
-  # options(download.file.method.GEOquery = "libcurl")
   gse <- getGEO(dataSetSeries, destdir = "./data")[[1]] 
 
   characteristics <- getCharacteristicsColumns(gse)
@@ -50,19 +49,15 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
       es <- es[rownames(es) != "", ]
       
       message("Garbage was deleted from gene table.")
-      a_es00 <<- es
       fData(es) <- data.frame(row.names = rownames(es))
-      a_es1 <<- es
       database <- getDatabaseForMapping(gse)
       fData(es)$symbol <- mapIds(database, keys = rownames(es), column = "SYMBOL", keytype = "ENTREZID")
-      a_es <<- es
       exprs(es) <- normalizeBetweenArrays(log2(exprs(es)+1), method="quantile")
       
       es.design <- model.matrix(~0+condition, data=pData(es))
       
       fit <- lmFit(es, es.design)
       conditions <- getConditionsForBuildingLinearModel(pData(gse)$condition)
-      a_conditions <<- conditions
       
       message("Conditions combinations were received for filling of contrast matrix.")
       
@@ -73,8 +68,6 @@ differentialExpression <- function(dataSetSeries, fileWithGenes) {
       deSize <- dim(fData(es))[1]
       deList <- fitLinearModel(fit, conditions, es.design, deSize)
       message("Linear Models were fitted and saved in 'deList'.")
-      
-      a_deList <<- deList
       
       writeDifExprResultsToFiles(deList, conditions, dataSetSeries)
       message("Linear Models were written to files.")
