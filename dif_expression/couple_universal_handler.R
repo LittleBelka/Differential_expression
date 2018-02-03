@@ -196,7 +196,6 @@ getConditionsForBuildingLinearModel <- function(conditions) {
 }
 
 
-
 provideValidOfSomeColumns <- function(gse) {
   successValidation <- FALSE
   if ("ENTREZ_GENE_ID" %in% names(fData(gse))) {
