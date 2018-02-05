@@ -37,6 +37,10 @@
 !rest_series_vs_gpl.csv
 !series.txt
 !series_vs_platforms.csv
+!new_series_vs_platforms.csv
+!create_table_gse_path_vs_gpl_path.ipynb
+!series_vs_gpl_tsv.csv
+!gpl.txt
 
 
 !get_list_series.R

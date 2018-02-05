@@ -148,7 +148,9 @@
 ../geo/platforms/GPLnnn/GPL872/annot/GPL872.annot.gz
 ../geo/platforms/GPLnnn/GPL8/annot/GPL8.annot.gz
 ../geo/platforms/GPLnnn/GPL168/annot/GPL168.annot.gz
+../geo/platforms/GPLnnn/GPL368/annot/GPL368.annot.gz
 ../geo/platforms/GPLnnn/GPL362/annot/GPL362.annot.gz
+../geo/platforms/GPLnnn/GPL876/annot/GPL876.annot.gz
 ../geo/platforms/GPLnnn/GPL85/annot/GPL85.annot.gz
 ../geo/platforms/GPLnnn/GPL257/annot/GPL257.annot.gz
 ../geo/platforms/GPLnnn/GPL784/annot/GPL784.annot.gz
@@ -401,6 +403,7 @@
 ../geo/platforms/GPL2nnn/GPL2813/annot/GPL2813.annot.gz
 ../geo/platforms/GPL2nnn/GPL2987/annot/GPL2987.annot.gz
 ../geo/platforms/GPL2nnn/GPL2914/annot/GPL2914.annot.gz
+../geo/platforms/GPL2nnn/GPL2000/annot/GPL2000.annot.gz
 ../geo/platforms/GPL2nnn/GPL2884/annot/GPL2884.annot.gz
 ../geo/platforms/GPL2nnn/GPL2643/annot/GPL2643.annot.gz
 ../geo/platforms/GPL2nnn/GPL2733/annot/GPL2733.annot.gz
@@ -423,6 +426,7 @@
 ../geo/platforms/GPL2nnn/GPL2575/annot/GPL2575.annot.gz
 ../geo/platforms/GPL2nnn/GPL2644/annot/GPL2644.annot.gz
 ../geo/platforms/GPL2nnn/GPL2734/annot/GPL2734.annot.gz
+../geo/platforms/GPL2nnn/GPL2917/annot/GPL2917.annot.gz
 ../geo/platforms/GPL2nnn/GPL2094/annot/GPL2094.annot.gz
 ../geo/platforms/GPL1nnn/GPL1872/annot/GPL1872.annot.gz
 ../geo/platforms/GPL1nnn/GPL1388/annot/GPL1388.annot.gz
@@ -489,6 +493,7 @@
 ../geo/platforms/GPL1nnn/GPL1350/annot/GPL1350.annot.gz
 ../geo/platforms/GPL1nnn/GPL1426/annot/GPL1426.annot.gz
 ../geo/platforms/GPL1nnn/GPL1521/annot/GPL1521.annot.gz
+../geo/platforms/GPL1nnn/GPL1386/annot/GPL1386.annot.gz
 ../geo/platforms/GPL1nnn/GPL1786/annot/GPL1786.annot.gz
 ../geo/platforms/GPL1nnn/GPL1715/annot/GPL1715.annot.gz
 ../geo/platforms/GPL1nnn/GPL1352/annot/GPL1352.annot.gz
@@ -587,12 +592,14 @@
 ../geo/platforms/GPL1nnn/GPL1412/annot/GPL1412.annot.gz
 ../geo/platforms/GPL5nnn/GPL5620/annot/GPL5620.annot.gz
 ../geo/platforms/GPL5nnn/GPL5121/annot/GPL5121.annot.gz
+../geo/platforms/GPL5nnn/GPL5051/annot/GPL5051.annot.gz
 ../geo/platforms/GPL5nnn/GPL5917/annot/GPL5917.annot.gz
 ../geo/platforms/GPL5nnn/GPL5530/annot/GPL5530.annot.gz
 ../geo/platforms/GPL5nnn/GPL5373/annot/GPL5373.annot.gz
 ../geo/platforms/GPL5nnn/GPL5145/annot/GPL5145.annot.gz
 ../geo/platforms/GPL5nnn/GPL5402/annot/GPL5402.annot.gz
 ../geo/platforms/GPL5nnn/GPL5825/annot/GPL5825.annot.gz
+../geo/platforms/GPL5nnn/GPL5447/annot/GPL5447.annot.gz
 ../geo/platforms/GPL5nnn/GPL5000/annot/GPL5000.annot.gz
 ../geo/platforms/GPL5nnn/GPL5056/annot/GPL5056.annot.gz
 ../geo/platforms/GPL5nnn/GPL5114/annot/GPL5114.annot.gz
@@ -725,6 +732,7 @@
 ../geo/platforms/GPL4nnn/GPL4006/annot/GPL4006.annot.gz
 ../geo/platforms/GPL4nnn/GPL4882/annot/GPL4882.annot.gz
 ../geo/platforms/GPL4nnn/GPL4372/annot/GPL4372.annot.gz
+../geo/platforms/GPL4nnn/GPL4049/annot/GPL4049.annot.gz
 ../geo/platforms/GPL4nnn/GPL4133/annot/GPL4133.annot.gz
 ../geo/platforms/GPL4nnn/GPL4479/annot/GPL4479.annot.gz
 ../geo/platforms/GPL4nnn/GPL4400/annot/GPL4400.annot.gz

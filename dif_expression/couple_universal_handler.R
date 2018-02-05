@@ -196,28 +196,28 @@ getConditionsForBuildingLinearModel <- function(conditions) {
 }
 
 
-provideValidOfSomeColumns <- function(gse) {
-  successValidation <- FALSE
-  if ("ENTREZ_GENE_ID" %in% names(fData(gse))) {
-    successValidation <- TRUE
-  } else {
-    columnNames <- names(fData(gse))
-    
-    for (i in 1:length(columnNames)) {
-      if (sapply(columnNames[i], tolower)[[1]] == "entrez_gene_id") {
-        names(fData(gse))[names(fData(gse)) == columnNames[i]] <- "ENTREZ_GENE_ID"
-        successValidation <- TRUE
-      } else if (sapply(columnNames[i], tolower)[[1]] == "gene") {
-        names(fData(gse))[names(fData(gse)) == columnNames[i]] <- "GENE"
-        numerics <- is.na(suppressWarnings(as.numeric(fData(a_gse)$GENE)))
-        
-        if (sum(!is.na(fData(a_gse)$GENE)) == length(numerics[numerics==FALSE]))
-          successValidation <- TRUE
-      }
-    }
-  }
-  return(list("fData"=fData(gse), "successValidation"=successValidation))
-}
+# provideValidOfSomeColumns <- function(gse) {
+#   successValidation <- FALSE
+#   if ("ENTREZ_GENE_ID" %in% names(fData(gse))) {
+#     successValidation <- TRUE
+#   } else {
+#     columnNames <- names(fData(gse))
+#     
+#     for (i in 1:length(columnNames)) {
+#       if (sapply(columnNames[i], tolower)[[1]] == "entrez_gene_id") {
+#         names(fData(gse))[names(fData(gse)) == columnNames[i]] <- "ENTREZ_GENE_ID"
+#         successValidation <- TRUE
+#       } else if (sapply(columnNames[i], tolower)[[1]] == "gene") {
+#         names(fData(gse))[names(fData(gse)) == columnNames[i]] <- "GENE"
+#         numerics <- is.na(suppressWarnings(as.numeric(fData(gse)$GENE)))
+#         
+#         if (sum(!is.na(fData(gse)$GENE)) == length(numerics[numerics==FALSE]))
+#           successValidation <- TRUE
+#       }
+#     }
+#   }
+#   return(list("fData"=fData(gse), "successValidation"=successValidation))
+# }
 
 
 getDatabaseForMapping <- function(gse) {
@@ -289,4 +289,32 @@ readDifExprResultsFromFiles <- function() {
     deList[[i]] <- read.table(files[i], header=T, colClasses=colTypes)
   
   return(deList)
+}
+
+
+createGenesSymbolsTable <- function(gpl) {
+  gpl <- read.table(gpl, header = T, 
+                    colClasses = c("character", "character", "integer"))
+  gpl <- gpl[!duplicated(gpl$id),]
+  gpl <- gpl[!duplicated(gpl$gene_id),]
+  
+  gpl <- gpl %>% 
+    set_rownames(.$id) %>% 
+    select(ID = id, ENTREZ_GENE_ID = gene_id, symbol = gene_symbol)
+
+  return(gpl)
+}
+
+
+collapseData <- function(gse, gpl, FUN=median) {
+  ranks <- apply(exprs(gse), 1, FUN)
+  ranks <- data.frame(r = ranks, i = seq_along(ranks))
+  table <- inner_join(rownames_to_column(gpl), rownames_to_column(ranks), 
+           by="rowname") %>% 
+           mutate(j = seq_along(symbol))
+  t <- table[order(table$r, decreasing=T), ]
+  keep <- t$i
+  res <- gse[keep, ]
+  rownames(res) <- table$ENTREZ_GENE_ID[t$j]
+  return(res)
 }
