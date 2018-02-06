@@ -220,21 +220,21 @@ getConditionsForBuildingLinearModel <- function(conditions) {
 # }
 
 
-getDatabaseForMapping <- function(gse) {
-  col <- colnames(pData(gse))
-  curOrganism <- ""
-  for (ch in col) 
-    if (grepl("organism", ch)) curOrganism <- tolower(pData(a_gse)[ch][[1]][1])
-  
-  database <- org.Hs.eg.db
-  
-  if (curOrganism != "") {
-    if (curOrganism == "mus musculus") database <- org.Mm.eg.db
-    if (curOrganism == "rattus norvegicus") database <- org.Rn.eg.db
-  }
-  
-  return(database)
-}
+# getDatabaseForMapping <- function(gse) {
+#   col <- colnames(pData(gse))
+#   curOrganism <- ""
+#   for (ch in col) 
+#     if (grepl("organism", ch)) curOrganism <- tolower(pData(a_gse)[ch][[1]][1])
+#   
+#   database <- org.Hs.eg.db
+#   
+#   if (curOrganism != "") {
+#     if (curOrganism == "mus musculus") database <- org.Mm.eg.db
+#     if (curOrganism == "rattus norvegicus") database <- org.Rn.eg.db
+#   }
+#   
+#   return(database)
+# }
 
 
 fitLinearModel <- function(fit, conditions, design, deSize) {
@@ -246,11 +246,17 @@ fitLinearModel <- function(fit, conditions, design, deSize) {
                levels=design)
     
     fit2 <- contrasts.fit(fit, contrasts)
-    fit2 <- eBayes(fit2)
     
-    deList[[i]] <- data.table(
-                   topTable(fit2, adjust.method="BH", number=deSize, sort.by = "B"), 
-                   keep.rownames = T)
+    df.residual <- unique(fit2$df.residual)
+    if ((length(df.residual) == 1 && df.residual[1] != 0) ||
+        (length(df.residual) != 1)) {
+      
+      fit2 <- eBayes(fit2)
+      
+      deList[[i]] <- data.table(
+        topTable(fit2, adjust.method="BH", number=deSize, sort.by = "B"), 
+        keep.rownames = T)
+    }
   }
   return(deList)
 }
@@ -278,22 +284,22 @@ writeDifExprResultsToFiles <- function(deList, conditions, dataSetSeries) {
 }
 
 
-readDifExprResultsFromFiles <- function() {
-  colTypes <- c("character", "character", 
-                "double", "double", "double", "double", "double","double")
-  files <- dir(path = "./results/dif_expression", 
-               full.names = TRUE, recursive = TRUE)
-  deList <- list()
-  
-  for (i in 1:length(files))
-    deList[[i]] <- read.table(files[i], header=T, colClasses=colTypes)
-  
-  return(deList)
-}
+# readDifExprResultsFromFiles <- function() {
+#   colTypes <- c("character", "character", 
+#                 "double", "double", "double", "double", "double","double")
+#   files <- dir(path = "./results/dif_expression", 
+#                full.names = TRUE, recursive = TRUE)
+#   deList <- list()
+#   
+#   for (i in 1:length(files))
+#     deList[[i]] <- read.table(files[i], header=T, colClasses=colTypes)
+#   
+#   return(deList)
+# }
 
 
 createGenesSymbolsTable <- function(gpl) {
-  gpl <- read.table(gpl, header = T, 
+  gpl <- read.table(gpl, header = T, sep = "\t",
                     colClasses = c("character", "character", "integer"))
   gpl <- gpl[!duplicated(gpl$id),]
   gpl <- gpl[!duplicated(gpl$gene_id),]

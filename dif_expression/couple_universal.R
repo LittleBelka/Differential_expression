@@ -6,7 +6,7 @@ downloadLibrariesAndSources <- function() {
   # library(org.Hs.eg.db)
   library(gtools)
   library(stringr)
-  library(fgsea)
+  # library(fgsea)
   library(ggplot2)
   library(data.table)
   library(dplyr)
@@ -23,7 +23,6 @@ downloadLibrariesAndSources <- function() {
 
 differentialExpression <- function(dataSetSeries, gpl, fileWithGenes) {
 
-  #gse <- getGEO(dataSetSeries, destdir = "./data_3")[[1]] 
   gse <- getGEO(filename = dataSetSeries, getGPL = F)
   
   dataSetSeries <- sub("(.*/)*", "", dataSetSeries) %>% 
@@ -36,19 +35,20 @@ differentialExpression <- function(dataSetSeries, gpl, fileWithGenes) {
   if (length(characteristics) > 0) {
     message("There are characteristics columns in the samples table.")
     conStructure <- getConditionsFromCharacteristics(gse, characteristics)
+    a_conStructure <<- conStructure
     conditionLists <- conStructure$conditionsList
     explanatoryTable <- conStructure$explanatoryTable 
   }
   
-  if (length(conditionLists) > 0) {
+  if (length(conditionLists) > 1) {
     pData(gse)$condition <- fillGseConditionColumn(conditionLists)
     message("Column 'condition' was created and filled in the samples table.")
     
     a_gse <<- gse
-    
+    a_gpl <<- gpl
     gpl <- createGenesSymbolsTable(gpl)
     es <- collapseData(gse, gpl)
-    a_gpl <<- gpl
+    
     a_es <<- es
     message("Garbage was deleted from gene table.")
     # fData(es) <- data.frame(row.names = rownames(es))
@@ -57,7 +57,7 @@ differentialExpression <- function(dataSetSeries, gpl, fileWithGenes) {
 
     if (max(exprs(es)) - min(exprs(es)) > 100)
       exprs(es) <- normalizeBetweenArrays(log2(exprs(es)+1), method="quantile")
-
+    
     es.design <- model.matrix(~0+condition, data=pData(es))
 
     fit <- lmFit(es, es.design)
@@ -70,28 +70,36 @@ differentialExpression <- function(dataSetSeries, gpl, fileWithGenes) {
       message(conditions[[i]][1], " ", conditions[[i]][2])
     
     deSize <- dim(exprs(es))[1]
+    
+    a_conditions <<- conditions
+    a_fit <<- fit
+    a_es.design <<- es.design
+    deSize <<- deSize
+    
     deList <- fitLinearModel(fit, conditions, es.design, deSize)
-    message("Linear Models were fitted and saved in 'deList'.")
-    
-    writeDifExprResultsToFiles(deList, conditions, dataSetSeries)
-    message("Linear Models were written to files.")
-    
-    if (length(explanatoryTable) > 0)
-      writeExplanatoryTableToFile(explanatoryTable, dataSetSeries)
-
-    #deList <- readDifExprResultsFromFiles()
-    #message("Linear Models were read from files and stored in 'deList'.")
-
-    gseaResults <- geneSetEnrichmentAnalysis(deList, fileWithGenes)
-    plots <<- gseaResults$gseaPlots
-    gseaTableResults <<- gseaResults$gseaTableResults
-    message("Gene set enrichment analysis was done.")
-
-    if (length(gseaResults$gseaPlots) > 0) {
-      writeGseaResults(gseaResults$gseaPlots, gseaResults$gseaTableResults,
-                       conditions, dataSetSeries)
-      message("Gene set enrichment analysis results were written to files.")
-    }
+    if (length(deList) > 0) {
+      message("Linear Models were fitted and saved in 'deList'.")
+      
+      writeDifExprResultsToFiles(deList, conditions, dataSetSeries)
+      message("Linear Models were written to files.")
+      
+      if (length(explanatoryTable) > 0)
+        writeExplanatoryTableToFile(explanatoryTable, dataSetSeries)
+  
+      #deList <- readDifExprResultsFromFiles()
+      #message("Linear Models were read from files and stored in 'deList'.")
+  
+      # gseaResults <- geneSetEnrichmentAnalysis(deList, fileWithGenes)
+      # plots <<- gseaResults$gseaPlots
+      # gseaTableResults <<- gseaResults$gseaTableResults
+      # message("Gene set enrichment analysis was done.")
+      # 
+      # if (length(gseaResults$gseaPlots) > 0) {
+      #   writeGseaResults(gseaResults$gseaPlots, gseaResults$gseaTableResults,
+      #                    conditions, dataSetSeries)
+      #   message("Gene set enrichment analysis results were written to files.")
+      # }
+    } else message("Linear Models can't be fitted.")
     
   } else 
     message("Characteristics columns in the samples table don't exist or were unhelpful.
@@ -100,7 +108,7 @@ differentialExpression <- function(dataSetSeries, gpl, fileWithGenes) {
 
 
 findGSEvsGPL <- function() {
-  table <- read.csv('different_helpful_scripts/series_vs_gpl_tsv.csv', 
+  table <- read.csv('some_documents/series_vs_gpl_tsv.csv', 
                                       sep = '\t', stringsAsFactors = F)
   result <- table %>% 
     filter(GPL != '') %>% 
@@ -110,15 +118,4 @@ findGSEvsGPL <- function() {
   
   return(result)
 }
-
-
-
-
-
-
-
-
-
-
-
 
