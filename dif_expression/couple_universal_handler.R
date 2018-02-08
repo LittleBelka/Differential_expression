@@ -11,33 +11,50 @@ getCharacteristicsColumns <- function(gse) {
 getConditionsFromTitle <- function() {}
 
 
+createMarkersForComplicatedConditions <- function() {
+  usedMarkers <- list()
+  for (i in 1:26) usedMarkers[intToUtf8(64+i)] <- 0
+  
+  extraMarkers <- permutations(
+    n=10, r=2, v=names(usedMarkers)[1:10], set=T, repeats.allowed=T)
+  
+  for (i in 1:(length(extraMarkers))/2) {
+    cond <- paste(extraMarkers[[i,1]], extraMarkers[[i,2]], sep="")
+    usedMarkers[cond] <- 0
+  }
+  return(usedMarkers)
+}
+
+
 getConditionsFromCharacteristics <- function(gse, characteristics) {
   uniqList <- list()
   conditionsList <- list()
   explanatoryTable <- data.table()
+  usedMarkers <- createMarkersForComplicatedConditions()
   
   for (ch in characteristics) {
     uniqChar <- unique(pData(gse)[ch])
     
     if (length(rownames(uniqChar)) > 1) {
-      conStructure <- getConditionsFromUniqValues(gse, pData(gse)[ch], 
-                                      conditionsList, uniqChar, explanatoryTable)
+      conStructure <- getConditionsFromUniqValues(pData(gse)[ch], conditionsList, 
+                                                  explanatoryTable, usedMarkers)
       conditionsList <- conStructure$conditionsList
       explanatoryTable <- conStructure$explanatoryTable
+      usedMarkers <- conStructure$usedMarkers
     }
   }
   return(list("conditionsList"=conditionsList, "explanatoryTable"=explanatoryTable))
 }
 
 
-getConditionsFromUniqValues <- function(gse, charColumns, conditionsList, uniqChar, 
-                                                                explanatoryTable) {
+getConditionsFromUniqValues <- function(charColumns, conditionsList, 
+                                              explanatoryTable, usedMarkers) {
   values <- sub("^.*: ", "", charColumns[[1]])
   numerics <- is.na(suppressWarnings(as.numeric(values)))
   
   if (length(numerics[numerics==FALSE]) == 0) {
     tmpCondition <- c()
-    tmpComplicatedCondition <- createTmpComplicatedConditionList(uniqChar)
+    tmpComplicatedCondition <- list()
     
     for (v in values) {
       oldV <- v
@@ -49,10 +66,11 @@ getConditionsFromUniqValues <- function(gse, charColumns, conditionsList, uniqCh
       
       if (complicatedCondition) {
         resultCondition <- handleComplicatedCondition(tmpComplicatedCondition, 
-                                                      oldV, explanatoryTable)
+                                          oldV, explanatoryTable, usedMarkers)
         v <- resultCondition$condition
         tmpComplicatedCondition <- resultCondition$tmpComplicatedCondition
         explanatoryTable <- resultCondition$explanatoryTable
+        usedMarkers <- resultCondition$usedMarkers
       } else 
         v <- gsub("[^a-zA-Z0-9]*", '\\1', v) 
       
@@ -60,7 +78,8 @@ getConditionsFromUniqValues <- function(gse, charColumns, conditionsList, uniqCh
     }
     conditionsList[[length(conditionsList)+1]] <- tmpCondition
   }
-  return(list("conditionsList"=conditionsList, "explanatoryTable"=explanatoryTable))
+  return(list("conditionsList"=conditionsList, "explanatoryTable"=explanatoryTable,
+              "usedMarkers"=usedMarkers))
 }
 
 
@@ -73,78 +92,48 @@ tryGetConditionFromBrackets <- function(condition) {
 }
 
 
-createTmpComplicatedConditionList <- function(uniqChar) {
-  tmpComplicatedCondition <- list()
-  lenUniqChar <- length(rownames(uniqChar))
-  letters <- c()
-  for (i in 1:26) letters <- c(letters, intToUtf8(64+i))
-  i = 1
-  
-  while (lenUniqChar >= i && i <= 26) {
-    tmpComplicatedCondition[[i]] <- list("condition"="", "replacement"=letters[i])
-    i = i + 1
-  }
-  if (lenUniqChar > 26) 
-    tmpComplicatedCondition <- condListWithPermutations(
-                                tmpComplicatedCondition, letters, lenUniqChar, i)
-  
-  return(tmpComplicatedCondition)
-}
-
-
-condListWithPermutations <- function(tmpComplicatedCondition, letters, 
-                                                            lenUniqChar, i) {
-  tmpConditions <- permutations(
-    n=length(letters[1:6]), r=2, v=letters[1:6], set=T, repeats.allowed=T)
-  
-  while (lenUniqChar >= i) {
-    cond <- paste(tmpConditions[[i,1]], tmpConditions[[i,2]], sep="")
-    tmpComplicatedCondition[[i]] <- list("condition"="", 
-                                         "replacement"=cond)
-    i = i + 1
-  }
-  return(tmpComplicatedCondition)
-}
-
-
 handleComplicatedCondition <- function(tmpComplicatedCondition, cond, 
-                                                        explanatoryTable) {
-  cond <- gsub("[^a-zA-Z0-9 \\+-]*", '\\1', cond) 
+                                              explanatoryTable, usedMarkers) {
+  cond <- gsub("[^a-zA-Z0-9 \\+-]*", '\\1', cond)
   newConditionName <- isContainedInConditionList(tmpComplicatedCondition, cond)
   if (newConditionName != "") {
     newCond <- newConditionName 
   } else {
-    newConditionIndex <- getFreeListPosition(tmpComplicatedCondition)
-    tmpComplicatedCondition[[newConditionIndex]]$condition <- cond
-    newCond <- tmpComplicatedCondition[[newConditionIndex]]$replacement
+    markerUse <- getFreeMarker(usedMarkers)
+    tmpComplicatedCondition[cond] <- markerUse$marker
+    usedMarkers <- markerUse$usedMarkers
     
     explanatoryTable <- rbindlist(list(explanatoryTable, data.table(
-                                  "characteristics"=cond, "marking"=newCond)))
+            "characteristics"=cond, "marking"=tmpComplicatedCondition[cond])))
   }
-  return(list("condition"=newCond, 
+  return(list("condition"=tmpComplicatedCondition[cond], 
               "tmpComplicatedCondition"=tmpComplicatedCondition, 
-              "explanatoryTable"=explanatoryTable))
+              "explanatoryTable"=explanatoryTable,
+              "usedMarkers"= usedMarkers))
 }
 
 
-getFreeListPosition <- function(tmpComplicatedCondition) {
+isContainedInConditionList <- function(tmpComplicatedCondition, cond) {
+  if (cond %in% names(tmpComplicatedCondition)) 
+    return(tmpComplicatedCondition[cond])
+  
+  return("")
+}
+
+
+getFreeMarker <- function(usedMarkers) {
   i = 0
   found <- FALSE
-  while(!found && length(tmpComplicatedCondition) > i) {
+  marker <- ""
+  while(!found && length(usedMarkers) > i) {
     i = i + 1
-    if (tmpComplicatedCondition[[i]]$condition == "") found <- TRUE
+    if (usedMarkers[i] == 0) {
+      found <- TRUE
+      marker <- names(usedMarkers)[i]
+      usedMarkers[i] <- 1
+    }
   }
-  return(i)
-}
-
-
-isContainedInConditionList <- function(tmpComplicatedCondition, condition) {
-  for (i in 1:length(tmpComplicatedCondition)) {
-    if (length(tmpComplicatedCondition[[i]]$condition) > 0 
-        && tmpComplicatedCondition[[i]]$condition == condition) 
-      return(tmpComplicatedCondition[[i]]$replacement)
-  }
-  return("")
+  return(list("usedMarkers"=usedMarkers, "marker"=marker))
 }
 
 

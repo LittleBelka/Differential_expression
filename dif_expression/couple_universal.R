@@ -40,7 +40,7 @@ differentialExpression <- function(dataSetSeries, gpl, fileWithGenes) {
     explanatoryTable <- conStructure$explanatoryTable 
   }
   
-  if (length(conditionLists) > 1) {
+  if (length(conditionLists) > 0 && length(unique(unlist(conditionLists))) > 1) {
     pData(gse)$condition <- fillGseConditionColumn(conditionLists)
     message("Column 'condition' was created and filled in the samples table.")
     
