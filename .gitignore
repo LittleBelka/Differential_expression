@@ -32,6 +32,8 @@
 !list_gpl.csv
 !list_url_gpl.csv
 !match_gpl_to_series.ipynb
+!genequery_post_requests.ipynb
+!add_kind_and_title_to_series.ipynb
 !platforms.txt
 !rest_gpl.txt
 !rest_series_vs_gpl.csv
@@ -48,6 +50,9 @@
 !list_current_gpl.txt
 !read_gpl.R
 !read_gpl_handler.R
+
+
+!series_vs_gpl_tsv_with_kind.csv
 
 !*/
 .Rproj.user
