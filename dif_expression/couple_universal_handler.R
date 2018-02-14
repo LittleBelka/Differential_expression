@@ -8,9 +8,6 @@ getCharacteristicsColumns <- function(gse) {
 }
 
 
-getConditionsFromTitle <- function() {}
-
-
 createMarkersForComplicatedConditions <- function() {
   usedMarkers <- list()
   for (i in 1:26) usedMarkers[intToUtf8(64+i)] <- 0
@@ -49,12 +46,21 @@ getConditionsFromCharacteristics <- function(gse, characteristics) {
 
 getConditionsFromUniqValues <- function(charColumns, conditionsList, 
                                               explanatoryTable, usedMarkers) {
+  beforeСolonСharacter <- ""
+  
+  if (grepl("^.*: ", charColumns[[1]][1])) 
+    beforeСolonСharacter <- sub(":.*", "", charColumns[[1]])
+  
   values <- sub("^.*: ", "", charColumns[[1]])
   numerics <- is.na(suppressWarnings(as.numeric(values)))
   
   if (length(numerics[numerics==FALSE]) == 0) {
     tmpCondition <- c()
-    tmpComplicatedCondition <- list()
+    
+    if (length(unique(beforeСolonСharacter)) == 1 && 
+              !grepl('\\s', beforeСolonСharacter[1])) {
+      values <- sub(": ", ".", charColumns[[1]])
+    }
     
     for (v in values) {
       oldV <- v
@@ -65,14 +71,17 @@ getConditionsFromUniqValues <- function(charColumns, conditionsList,
       if (isTooComplicatedCondition(v)) complicatedCondition <- TRUE
       
       if (complicatedCondition) {
-        resultCondition <- handleComplicatedCondition(tmpComplicatedCondition, 
-                                          oldV, explanatoryTable, usedMarkers)
+        resultCondition <- handleComplicatedCondition(oldV, 
+                                      explanatoryTable, usedMarkers)
         v <- resultCondition$condition
-        tmpComplicatedCondition <- resultCondition$tmpComplicatedCondition
         explanatoryTable <- resultCondition$explanatoryTable
         usedMarkers <- resultCondition$usedMarkers
-      } else 
-        v <- gsub("[^a-zA-Z0-9]*", '\\1', v) 
+      } else {
+        v <- gsub("[-\\+\\/;:\\.\\?!,]", ' ', v) %>% 
+             gsub("\\s+", ' ', .) %>% 
+             gsub("(^\\s+)|(\\s+$)", '', .) %>% 
+             gsub(" ", ".", .)
+      }
       
       if (grepl("[a-zA-Z]+", v)) tmpCondition <- c(tmpCondition, v)
     }
@@ -92,31 +101,31 @@ tryGetConditionFromBrackets <- function(condition) {
 }
 
 
-handleComplicatedCondition <- function(tmpComplicatedCondition, cond, 
-                                              explanatoryTable, usedMarkers) {
-  cond <- gsub("[^a-zA-Z0-9 \\+-]*", '\\1', cond)
-  newConditionName <- isContainedInConditionList(tmpComplicatedCondition, cond)
-  if (newConditionName != "") {
-    newCond <- newConditionName 
-  } else {
+handleComplicatedCondition <- function(cond, explanatoryTable, usedMarkers) {
+
+  newConditionName <- isContainedInExplanatoryTable(explanatoryTable, cond)
+  if (newConditionName == "") {
     markerUse <- getFreeMarker(usedMarkers)
-    tmpComplicatedCondition[cond] <- markerUse$marker
+    newConditionName <- markerUse$marker
     usedMarkers <- markerUse$usedMarkers
     
     explanatoryTable <- rbindlist(list(explanatoryTable, data.table(
-            "characteristics"=cond, "marking"=tmpComplicatedCondition[cond])))
+      "characteristics"=cond, "marking"=newConditionName)))
   }
-  return(list("condition"=tmpComplicatedCondition[cond], 
-              "tmpComplicatedCondition"=tmpComplicatedCondition, 
+  return(list("condition"=newConditionName, 
               "explanatoryTable"=explanatoryTable,
               "usedMarkers"= usedMarkers))
 }
 
 
-isContainedInConditionList <- function(tmpComplicatedCondition, cond) {
-  if (cond %in% names(tmpComplicatedCondition)) 
-    return(tmpComplicatedCondition[cond])
-  
+isContainedInExplanatoryTable <- function(explanatoryTable, cond) {
+  if (cond %in% explanatoryTable$characteristics) {
+    r <- explanatoryTable %>% 
+       filter(characteristics == cond) %>% 
+       select(marking)
+    
+    return(r[[1]][1])
+  }
   return("")
 }
 
@@ -185,47 +194,6 @@ getConditionsForBuildingLinearModel <- function(conditions) {
 }
 
 
-# provideValidOfSomeColumns <- function(gse) {
-#   successValidation <- FALSE
-#   if ("ENTREZ_GENE_ID" %in% names(fData(gse))) {
-#     successValidation <- TRUE
-#   } else {
-#     columnNames <- names(fData(gse))
-#     
-#     for (i in 1:length(columnNames)) {
-#       if (sapply(columnNames[i], tolower)[[1]] == "entrez_gene_id") {
-#         names(fData(gse))[names(fData(gse)) == columnNames[i]] <- "ENTREZ_GENE_ID"
-#         successValidation <- TRUE
-#       } else if (sapply(columnNames[i], tolower)[[1]] == "gene") {
-#         names(fData(gse))[names(fData(gse)) == columnNames[i]] <- "GENE"
-#         numerics <- is.na(suppressWarnings(as.numeric(fData(gse)$GENE)))
-#         
-#         if (sum(!is.na(fData(gse)$GENE)) == length(numerics[numerics==FALSE]))
-#           successValidation <- TRUE
-#       }
-#     }
-#   }
-#   return(list("fData"=fData(gse), "successValidation"=successValidation))
-# }
-
-
-# getDatabaseForMapping <- function(gse) {
-#   col <- colnames(pData(gse))
-#   curOrganism <- ""
-#   for (ch in col) 
-#     if (grepl("organism", ch)) curOrganism <- tolower(pData(a_gse)[ch][[1]][1])
-#   
-#   database <- org.Hs.eg.db
-#   
-#   if (curOrganism != "") {
-#     if (curOrganism == "mus musculus") database <- org.Mm.eg.db
-#     if (curOrganism == "rattus norvegicus") database <- org.Rn.eg.db
-#   }
-#   
-#   return(database)
-# }
-
-
 fitLinearModel <- function(fit, conditions, design, deSize) {
   deList <- list()
   for (i in 1:length(conditions)) {
@@ -266,7 +234,7 @@ writeDifExprResultsToFiles <- function(deList, conditions, dataSetSeries) {
   for (i in 1:length(conditions)) {
     nameFile <- paste(filePath,
                       "/dif_expression/",
-                      conditions[[i]]$firstCon, ".vs.", 
+                      conditions[[i]]$firstCon, "..vs..", 
                       conditions[[i]]$secondCon, ".tsv", sep="")
     write.table(deList[[i]], nameFile, sep="\t", quote = F, row.names = F)
   }

@@ -6,6 +6,7 @@
 !couple_universal.R
 !couple_universal_handler.R
 !gsea.R
+!do_dif_expr.sh
 !start_diff_expression.R
 !di.dn200.sig.txt
 !geo_table.tsv
