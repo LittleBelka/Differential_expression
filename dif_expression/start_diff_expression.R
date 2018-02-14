@@ -20,8 +20,8 @@ downloadLibrariesAndSources()
 # gseVSgpl <- data.frame("dataSetSeries"="data_3/GSE57802_series_matrix.txt.gz",
 #                        "availableGPL"="data_3/GPL13158.tsv", stringsAsFactors = F)
 
-gseVSgpl <- data.frame("dataSetSeries"="data_4/GSE24931_series_matrix.txt.gz",
-                       "availableGPL"="data_4/GPL6887.tsv", stringsAsFactors = F)
+gseVSgpl <- data.frame("dataSetSeries"="data/GSE61055_series_matrix.txt.gz",
+                       "availableGPL"="data/GPL6887.tsv", stringsAsFactors = F)
                        
 
 # gseVSgpl <- data.frame("dataSetSeries"="data_4/GSE28026_series_matrix.txt.gz",

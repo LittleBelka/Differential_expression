@@ -38,7 +38,7 @@ differentialExpression <- function(dataSetSeries, gpl) {
     
     pData(gse)$condition <- fillGseConditionColumn(conditionLists)
     message("Column 'condition' was created and filled in the samples table.")
-    
+
     gpl <- createGenesSymbolsTable(gpl)
     es <- collapseData(gse, gpl)
     
@@ -64,6 +64,7 @@ differentialExpression <- function(dataSetSeries, gpl) {
         deSize <- dim(exprs(es))[1]
         
         deList <- fitLinearModel(fit, conditions, es.design, deSize)
+        
         if (length(deList) > 0) {
           message("Linear Models were fitted and saved in 'deList'.")
           

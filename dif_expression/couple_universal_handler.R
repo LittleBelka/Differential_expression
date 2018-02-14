@@ -279,5 +279,6 @@ collapseData <- function(gse, gpl, FUN=median) {
   keep <- t$i
   res <- gse[keep, ]
   rownames(res) <- table$ENTREZ_GENE_ID[t$j]
+  fData(res)$symbol <- t$symbol
   return(res)
 }
