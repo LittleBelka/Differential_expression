@@ -50,7 +50,7 @@ differentialExpression <- function(dataSetSeries, gpl) {
         exprs(es) <- normalizeBetweenArrays(log2(exprs(es)+1), method="quantile")
       
       es.design <- model.matrix(~0+condition, data=pData(es))
-  
+
       fit <- lmFit(es, es.design)
       conditions <- getConditionsForBuildingLinearModel(pData(gse)$condition)
       
@@ -64,7 +64,7 @@ differentialExpression <- function(dataSetSeries, gpl) {
         deSize <- dim(exprs(es))[1]
         
         deList <- fitLinearModel(fit, conditions, es.design, deSize)
-        
+
         if (length(deList) > 0) {
           message("Linear Models were fitted and saved in 'deList'.")
           

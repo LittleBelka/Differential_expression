@@ -23,21 +23,49 @@ createMarkersForComplicatedConditions <- function() {
 }
 
 
+isValidCharacteristicsColumns <- function(gse, characteristics) {
+  containsNA <- F
+  containsEmpty <- c()
+  for (ch in characteristics) {
+    uniqChar <- unique(pData(gse)[ch])[[1]]
+    
+    if (NA %in% uniqChar) containsNA <- T
+    
+    if ("" %in% uniqChar) {
+      containsEmpty <- c(containsEmpty, T)
+    } else containsEmpty <- c(containsEmpty, F)
+  }    
+  return(list("containsNA"=containsNA, "containsEmpty"=containsEmpty))
+}
+
+
 getConditionsFromCharacteristics <- function(gse, characteristics) {
   uniqList <- list()
   conditionsList <- list()
   explanatoryTable <- data.table()
   usedMarkers <- createMarkersForComplicatedConditions()
   
-  for (ch in characteristics) {
-    uniqChar <- unique(pData(gse)[ch])
-    
-    if (length(rownames(uniqChar)) > 1) {
-      conStructure <- getConditionsFromUniqValues(pData(gse)[ch], conditionsList, 
-                                                  explanatoryTable, usedMarkers)
-      conditionsList <- conStructure$conditionsList
-      explanatoryTable <- conStructure$explanatoryTable
-      usedMarkers <- conStructure$usedMarkers
+  validColumnResult <- isValidCharacteristicsColumns(gse, characteristics)
+  
+  if (validColumnResult$containsNA == F) {  
+    if (length(unique(validColumnResult$containsEmpty)) == 2 || 
+        (length(unique(validColumnResult$containsEmpty)) == 1 
+        && unique(validColumnResult$containsEmpty)[1] == F)) {
+      
+      for (i in 1:length(characteristics)) {
+        if (validColumnResult$containsEmpty[i] == F) {
+          uniqChar <- unique(pData(gse)[characteristics[i]])
+          
+          if (length(rownames(uniqChar)) > 1) {
+            conStructure <- getConditionsFromUniqValues(pData(gse)[characteristics[i]], 
+                                        conditionsList, explanatoryTable, usedMarkers)
+            conditionsList <- conStructure$conditionsList
+            explanatoryTable <- conStructure$explanatoryTable
+            usedMarkers <- conStructure$usedMarkers
+          }
+        }
+      }
+      
     }
   }
   return(list("conditionsList"=conditionsList, "explanatoryTable"=explanatoryTable))
@@ -64,13 +92,9 @@ getConditionsFromUniqValues <- function(charColumns, conditionsList,
     
     for (v in values) {
       oldV <- v
-      complicatedCondition <- FALSE
-      
-      if (grepl("\\(.*\\)", v)) v <- tryGetConditionFromBrackets(v)
-      
-      if (isTooComplicatedCondition(v)) complicatedCondition <- TRUE
-      
-      if (complicatedCondition) {
+      if (grepl("\\(.*\\)", v)) v <- tryRemoveConditionFromBrackets(v)
+
+      if (isTooComplicatedCondition(v)) {
         resultCondition <- handleComplicatedCondition(oldV, 
                                       explanatoryTable, usedMarkers)
         v <- resultCondition$condition
@@ -92,12 +116,12 @@ getConditionsFromUniqValues <- function(charColumns, conditionsList,
 }
 
 
-tryGetConditionFromBrackets <- function(condition) {
-  newCondition <- str_replace(condition, '.*\\((.*)\\).*', '\\1')
-  tmp <- gsub("[^a-zA-Z]*", '\\1', newCondition)
-  if (nchar(tmp) > 0)
-    return(newCondition)
-  return(condition)
+tryRemoveConditionFromBrackets <- function(v) {
+  newCondition <- gsub('\\((.*)\\)', '', v) %>% 
+    gsub("\\s+", ' ', .) %>% 
+    gsub("(^\\s+)|(\\s+$)", '', .)
+
+  return(newCondition)
 }
 
 
