@@ -17,8 +17,11 @@ downloadLibrariesAndSources()
 # gseVSgpl <- findGSEvsGPL()
 # print(gseVSgpl)
 
-gseVSgpl <- data.frame("dataSetSeries"="data_3/GSE57802_series_matrix.txt.gz",
-                       "availableGPL"="data_3/GPL13158.tsv", stringsAsFactors = F)
+gseVSgpl <- data.frame("dataSetSeries"="data_4/GSE40795-GPL1355_series_matrix.txt.gz",
+                       "availableGPL"="data_4/GPL1355.tsv", stringsAsFactors = F)
+
+# gseVSgpl <- data.frame("dataSetSeries"="data_3/GSE57802_series_matrix.txt.gz",
+#                        "availableGPL"="data_3/GPL13158.tsv", stringsAsFactors = F)
 
 # gseVSgpl <- data.frame("dataSetSeries"="data/GSE61055_series_matrix.txt.gz",
 #                        "availableGPL"="data/GPL6887.tsv", stringsAsFactors = F)

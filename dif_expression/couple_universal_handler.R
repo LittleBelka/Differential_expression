@@ -299,7 +299,7 @@ collapseData <- function(gse, gpl, FUN=median) {
   table <- inner_join(rownames_to_column(gpl), rownames_to_column(ranks), 
            by="rowname") %>% 
            mutate(j = seq_along(symbol))
-  t <- table[order(table$r, decreasing=T), ]
+  t <- table[order(table$r, decreasing=T), ][1:7000,]
   keep <- t$i
   res <- gse[keep, ]
   rownames(res) <- table$ENTREZ_GENE_ID[t$j]

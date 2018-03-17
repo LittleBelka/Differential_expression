@@ -38,7 +38,7 @@ differentialExpression <- function(dataSetSeries, gpl) {
     
     pData(gse)$condition <- fillGseConditionColumn(conditionLists)
     message("Column 'condition' was created and filled in the samples table.")
-
+    
     gpl <- createGenesSymbolsTable(gpl)
     es <- collapseData(gse, gpl)
     

@@ -42,6 +42,7 @@
 !series_vs_platforms.csv
 !new_series_vs_platforms.csv
 !create_table_gse_path_vs_gpl_path.ipynb
+!create_csv_files_for_getting_gmt.ipynb
 !series_vs_gpl_tsv.csv
 !gpl.txt
 
@@ -53,9 +54,16 @@
 !read_gpl_handler.R
 !extract_200_gene_expr.R
 !extract_200_gene_handler.R
+!extract_gene_handler.R
+!extract_gene_expr.R
+!write_hs_gmt_file_with_dif_exprs_200.R
+!split_kinds_by_csv_files.R
 
 
 !series_vs_gpl_tsv_with_kind.csv
+!human_for_slurm_script.csv
+!mouse_for_slurm_script.csv
+!rat_for_slurm_script.csv
 
 !*/
 .Rproj.user

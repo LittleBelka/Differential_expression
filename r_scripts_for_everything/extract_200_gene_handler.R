@@ -45,17 +45,17 @@ write200Genes <- function(nameTables, pathFolder, upCondition, downCondition) {
     gse <- read.table(nameTables, header=T, sep="\t", 
                       fill = TRUE, quote = "", colClasses=colTypes)
     gse <- subset(gse, !is.na(gse$symbol)) 
-    gse <- gse[order(gse$AveExpr, decreasing=TRUE),][1:7000,]
+    # gse <- gse[order(gse$AveExpr, decreasing=TRUE),][1:7000,]
 
-    # up <- gse[order(gse$t, decreasing=TRUE),][1:200,]
-    # down <- gse[order(gse$t),][1:200,]
-    up <- gse[order(gse$t, decreasing=TRUE),][1:400,]
-    down <- gse[order(gse$t),][1:400,]
+    up <- gse[order(gse$t, decreasing=TRUE),][1:200,]
+    down <- gse[order(gse$t),][1:200,]
+    # up <- gse[order(gse$t, decreasing=TRUE),][1:400,]
+    # down <- gse[order(gse$t),][1:400,]
     
     writeCSV(up, pathFolder, upCondition)
     writeCSV(down, pathFolder, downCondition)
     
-    return(list("up"=up$rn, "down"=down$rn))
+    return(list("up"=up$rn, "down"=down$rn, "universe"=gse$rn))
   }, error = function(error_message) {
     message(error_message)
   })
@@ -69,10 +69,9 @@ writeGenesDependsOnPvalueAndT <- function(nameTables, pathFolder, upCondition, d
   tryCatch({
     gse <- read.table(nameTables, header=T, sep="\t", 
                       fill = TRUE, quote = "", colClasses=colTypes)
-    gse <- subset(gse, !is.na(gse$symbol)) 
-    gse <- subset(gse, !is.na(gse$t))
+    gse2 <- subset(gse, !is.na(gse$symbol)) 
+    gse <- subset(gse2, !is.na(gse2$t))
     gse <- subset(gse, !is.na(gse$adj.P.Val))
-    gse <- gse[order(gse$AveExpr, decreasing=TRUE),][1:7000,]
     
     gse <- subset(gse, abs(gse$logFC) > 0.5)
     
@@ -83,11 +82,11 @@ writeGenesDependsOnPvalueAndT <- function(nameTables, pathFolder, upCondition, d
     writeCSV(down, pathFolder, downCondition)
     
     if (nrow(up) > 0 && nrow(down) > 0) {
-      return(list("up"=up$rn, "down"=down$rn))
+      return(list("up"=up$rn, "down"=down$rn, "universe"=gse2$rn))
     } else if (nrow(up) > 0 && nrow(down) == 0) {
-      return(list("up"=up$rn, "down"=NA))
+      return(list("up"=up$rn, "down"=NA, "universe"=gse2$rn))
     } else if (nrow(up) == 0 && nrow(down) > 0) {
-      return(list("up"=NA, "down"=down$rn))
+      return(list("up"=NA, "down"=down$rn, "universe"=gse2$rn))
     }
     
   }, error = function(error_message) {
@@ -107,7 +106,8 @@ writeCSV <- function(gse, pathFolder, condition) {
 
 writeGMT <- function(gmt) {
   if (length(gmt) > 0) {
-    fileConn<-file("some_documents/modules_t_pvalue_log.gmt")
+    fileConn<-file("some_documents/modules_tmp.gmt")
+    # fileConn<-file("some_documents/modules_t_value_log.gmt")
     # fileConn<-file("some_documents/modules_400_genes.gmt")
     toWrite <- c()
     
@@ -122,7 +122,3 @@ writeGMT <- function(gmt) {
     close(fileConn)
   }
 }
-
-
-
-
