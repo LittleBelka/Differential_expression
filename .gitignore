@@ -12,6 +12,7 @@
 !geo_table.tsv
 !countGSEfromGEOtable.R
 !downloadGSE.R
+!remove_lines_from_file.sh
 
 !copy_data_from_apredeus.ipynb
 !download_data_from_ncbi.ipynb
@@ -35,6 +36,7 @@
 !match_gpl_to_series.ipynb
 !genequery_post_requests.ipynb
 !add_kind_and_title_to_series.ipynb
+!add_kind_and_title_to_series_2.ipynb
 !platforms.txt
 !rest_gpl.txt
 !rest_series_vs_gpl.csv
@@ -43,6 +45,7 @@
 !new_series_vs_platforms.csv
 !create_table_gse_path_vs_gpl_path.ipynb
 !create_csv_files_for_getting_gmt.ipynb
+!change_module_annotation_file.ipynb
 !series_vs_gpl_tsv.csv
 !gpl.txt
 
