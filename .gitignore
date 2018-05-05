@@ -61,6 +61,9 @@
 !extract_gene_expr.R
 !write_hs_gmt_file_with_dif_exprs_200.R
 !split_kinds_by_csv_files.R
+!change_modules_numbers_in_gmt_annotation_file.R
+!change_modules_numbers_in_gmt_file.R
+!remove_wrong_lines_from_hs_gmt.R
 
 
 !series_vs_gpl_tsv_with_kind.csv
