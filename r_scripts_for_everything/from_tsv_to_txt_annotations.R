@@ -23,7 +23,7 @@ writeToFile <- function(t, filename) {
 # gseTable <- read.csv('some_documents/new_modules_annotations_files/mm.modules_annotations.tsv',
 #                        header = T, sep = "\t", fill = TRUE)
 
-gseTable <- read.csv('some_documents/new_modules_annotations_files/hs.modules_annotations.tsv',
+gseTable <- read.csv('some_documents/new_modules_annotations_files_2/rt.modules_annotations.tsv',
                        header = T, sep = "\t", fill = TRUE)
 
 result <- gseTable %>% 
@@ -34,4 +34,4 @@ result <- gseTable %>%
 
 # writeToFile(result, 'some_documents/modules_annot_txt_files/rt.modules_annotations.txt')
 # writeToFile(result, 'some_documents/modules_annot_txt_files/mm.modules_annotations.txt')
-writeToFile(result, 'some_documents/modules_annot_txt_files/hs.modules_annotations.txt')
+writeToFile(result, 'some_documents/modules_annot_txt_files_2/rt.modules_annotations.txt')

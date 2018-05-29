@@ -42,6 +42,9 @@ differentialExpression <- function(dataSetSeries, gpl) {
     gpl <- createGenesSymbolsTable(gpl)
     es <- collapseData(gse, gpl)
     
+    a_gpl <<- gpl
+    a_es <<- es
+    
     message("Garbage was deleted from gene table.")
 
     if (!(is.na(max(exprs(es)))) && !(is.na(min(exprs(es))))) {
@@ -53,6 +56,8 @@ differentialExpression <- function(dataSetSeries, gpl) {
 
       fit <- lmFit(es, es.design)
       conditions <- getConditionsForBuildingLinearModel(pData(gse)$condition)
+      a_conditions <<- conditions
+      a_des <<- es.design
       
       if (length(conditions) > 0) {
         message("Conditions combinations were received for filling of contrast matrix.")

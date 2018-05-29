@@ -13,7 +13,7 @@ createMarkersForComplicatedConditions <- function() {
   for (i in 1:26) usedMarkers[intToUtf8(64+i)] <- 0
   
   extraMarkers <- permutations(
-    n=10, r=2, v=names(usedMarkers)[1:10], set=T, repeats.allowed=T)
+    n=12, r=2, v=names(usedMarkers)[1:12], set=T, repeats.allowed=T)
   
   for (i in 1:(length(extraMarkers))/2) {
     cond <- paste(extraMarkers[[i,1]], extraMarkers[[i,2]], sep="")
@@ -74,21 +74,16 @@ getConditionsFromCharacteristics <- function(gse, characteristics) {
 
 getConditionsFromUniqValues <- function(charColumns, conditionsList, 
                                               explanatoryTable, usedMarkers) {
-  beforeСolonСharacter <- ""
-  
-  if (grepl("^.*: ", charColumns[[1]][1])) 
-    beforeСolonСharacter <- sub(":.*", "", charColumns[[1]])
-  
   values <- sub("^.*: ", "", charColumns[[1]])
+  a_values <<- values
   numerics <- is.na(suppressWarnings(as.numeric(values)))
   
-  if (length(numerics[numerics==FALSE]) == 0) {
-    tmpCondition <- c()
+  if ((length(numerics[numerics==FALSE]) == 0) || 
+      (length(numerics[numerics==FALSE]) != 0 && isUsefulNumbers(as.numeric(values)))) {
     
-    if (length(unique(beforeСolonСharacter)) == 1 && 
-              !grepl('\\s', beforeСolonСharacter[1])) {
-      values <- sub(": ", ".", charColumns[[1]])
-    }
+    tmpCondition <- c()
+    beforeСolon <- gsub(" ", ".", sub(":.*", "", charColumns[[1]]))
+    values <- paste(beforeСolon, ".", values, sep="")
     
     for (v in values) {
       oldV <- v
@@ -101,7 +96,7 @@ getConditionsFromUniqValues <- function(charColumns, conditionsList,
         explanatoryTable <- resultCondition$explanatoryTable
         usedMarkers <- resultCondition$usedMarkers
       } else {
-        v <- gsub("[-\\+\\/;:\\.\\?!,]", ' ', v) %>% 
+        v <- gsub("[-\\+\\/;:\\.\\?!,\\\\]", ' ', v) %>% 
              gsub("\\s+", ' ', .) %>% 
              gsub("(^\\s+)|(\\s+$)", '', .) %>% 
              gsub(" ", ".", .)
@@ -113,6 +108,26 @@ getConditionsFromUniqValues <- function(charColumns, conditionsList,
   }
   return(list("conditionsList"=conditionsList, "explanatoryTable"=explanatoryTable,
               "usedMarkers"=usedMarkers))
+}
+
+
+isUsefulNumbers <- function(numbers) {
+  maxNumber <- length(numbers)
+  numbers <- sort(numbers, decreasing = F)
+  
+  isInteger <- T
+  tryCatch({
+    stopifnot(all(numbers == floor(numbers)))
+  }, error = function(e) {
+    isInteger <- F
+  })
+  
+  isUseful <- T
+  if (isInteger && numbers[1] == 1 && numbers[maxNumber] == maxNumber 
+      && length(unique(numbers)) == maxNumber) 
+    isUseful <- F
+  
+  return(isUseful)
 }
 
 
@@ -225,15 +240,17 @@ fitLinearModel <- function(fit, conditions, design, deSize) {
     contrasts <- makeContrasts2(
                c("condition", conditions[[i]]$firstCon, conditions[[i]]$secondCon), 
                levels=design)
-    
+    a_contrasts <<- contrasts
     fit2 <- contrasts.fit(fit, contrasts)
+    a_fit2 <<- fit2
     
     df.residual <- unique(fit2$df.residual)
     if ((length(df.residual) == 1 && df.residual[1] != 0) ||
         (length(df.residual) != 1)) {
       
+      a_dfres <<- df.residual
       fit2 <- eBayes(fit2)
-      
+      a_fit2_2 <<- fit2
       deList[[i]] <- data.table(
         topTable(fit2, adjust.method="BH", number=deSize, sort.by = "B"), 
         keep.rownames = T)
